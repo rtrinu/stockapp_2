@@ -1,19 +1,25 @@
-import { useEffect, useState } from "react";
+import Navbar from "./components/Navbar.jsx";
+import HeroSection from "./components/HeroSection.jsx";
+import StatsSection from "./components/StatsSection.jsx";
+import FeaturesSection from "./components/FeaturesSection.jsx";
+import PricingSection from "./components/PricingSection.jsx";
+import TestimonialsSection from "./components/TestimonialsSection.jsx";
+import CtaSection from "./components/CtaSection.jsx";
+import Footer from "./components/Footer.jsx";
 
 function App() {
-  const [data, setData] = useState(null);
-
-  useEffect(() => {
-    fetch("http://localhost:8000/")
-      .then((res) => res.json())
-      .then(setData)
-      .catch(console.error);
-  }, []);
-
   return (
-    <div style={{ padding: 24 }}>
-      <h1>React + FastAPI</h1>
-      <p>{data ? JSON.stringify(data) : "Loading…"}</p>
+    <div data-theme="dark" className="min-h-screen bg-base-100">
+      <Navbar />
+      <main>
+        <HeroSection />
+        <StatsSection />
+        <FeaturesSection />
+        <PricingSection />
+        <TestimonialsSection />
+        <CtaSection />
+      </main>
+      <Footer />
     </div>
   );
 }
