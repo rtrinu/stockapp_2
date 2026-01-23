@@ -1,12 +1,12 @@
 from dotenv import load_dotenv
-from pydantic.settings import BaseSettings
+from pydantic_settings import BaseSettings
 from pydantic import field_validator
 from typing import List
 
 load_dotenv()
 
 
-class Settintgs(BaseSettings):
+class Settings(BaseSettings):
     ALPACA_KEY: str
     ALPACA_SECRET: str
     ALPACA_BASE_URL: str
