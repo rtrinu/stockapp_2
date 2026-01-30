@@ -1,10 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from db.database import engine
-from models.models import User
+from models.models import TestUser
 from db.database import init_db
+from routes import auth
 
-app = FastAPI()
+app = FastAPI(
+    version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
 init_db()
 
 app.add_middleware(
@@ -19,6 +24,9 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return {"message": "Hello Asshole"}
+
+
+app.include_router(auth.router)
 
 
 if __name__ == "__main__":
