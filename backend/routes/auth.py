@@ -4,6 +4,7 @@ from db.database import get_db
 from models.models import TestUser
 from core.settings import settings
 from account.auth import signup
+from account.password import hash_pwd, verify_pwd
 
 router = APIRouter()
 
@@ -20,5 +21,7 @@ def signup_endpoint(
     if existing:
         raise HTTPException(status_code=400, detail="User already exists")
 
-    new_user = signup(db, email, password, api_key, secret_key)
+    hashed_password = hash_pwd(password)
+
+    new_user = signup(db, email, hashed_password, api_key, secret_key)
     return {"id": new_user.id, "email": new_user.email}
