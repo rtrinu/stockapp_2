@@ -24,3 +24,10 @@ class User(TimestampModel, table=True):
     is_active: bool = Field(default=True)
     encrypted_api_key: Optional[str] = None
     encrypted_secret_key: Optional[str] = None
+
+
+class TestUser(TimestampModel, table=True):
+    email: str = Field(unique=True, nullable=False)
+    password: str = Field(nullable=False)
+    api_key: str = Field(nullable=False)
+    api_secret: str = Field(nullable=False)
