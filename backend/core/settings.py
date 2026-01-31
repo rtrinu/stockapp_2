@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api"
     ALLOWED_ORIGINS: str = ""
     DEBUG: bool = True
+    JWT_SECRET: str
+    JWT_ALGORITHM: str
+    JWT_EXPIRATION_MINUTES: int
 
     @field_validator("ALLOWED_ORIGINS")
     def parse_allowed_origins(cls, v: str) -> List[str]:
