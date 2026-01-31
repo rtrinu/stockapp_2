@@ -1,15 +1,15 @@
-from models.models import TestUser
+from models.models import User
 from sqlmodel import Session
 
 
 def signup(
     db: Session, email: str, password: str, api_key: str, api_secret: str
-) -> TestUser:
-    new_user = TestUser(
+) -> User:
+    new_user = User(
         email=email,
-        password=password,
-        api_key=api_key,
-        api_secret=api_secret,
+        hashed_password=password,
+        encrypted_api_key=api_key,
+        encrypted_api_secret=api_secret,
     )
     db.add(new_user)
     db.commit()

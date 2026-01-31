@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from db.database import engine
-from models.models import TestUser
+from models.models import User
 from db.database import init_db
 from routes import auth
 

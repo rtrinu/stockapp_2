@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session
 from db.database import get_db
-from models.models import TestUser
+from models.models import User
 from core.settings import settings
 from core.cryptography import encrypt, decrypt
 from account.auth import signup
@@ -20,7 +20,7 @@ def signup_endpoint(
     secret_key: str,
     db: Session = Depends(get_db),
 ):
-    existing = db.query(TestUser).filter(TestUser.email == email).first()
+    existing = db.query(User).filter(User.email == email).first()
     if existing:
         raise HTTPException(status_code=400, detail="User already exists")
 
@@ -40,7 +40,7 @@ def login_endpoint(
     password: str,
     db: Session = Depends(get_db),
 ):
-    existing = db.query(TestUser).filter(TestUser.email == email).first()
+    existing = db.query(User).filter(User.email == email).first()
     if not existing:
         raise HTTPException(status_code=400, detail="User not found")
     verify_password = hasher.verify(password, existing.password)
