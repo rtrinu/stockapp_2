@@ -21,7 +21,8 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     JWT_SECRET: str
     JWT_ALGORITHM: str
-    JWT_EXPIRATION_MINUTES: int
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
 
     @field_validator("ALLOWED_ORIGINS")
     def parse_allowed_origins(cls, v: str) -> List[str]:
