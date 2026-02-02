@@ -2,13 +2,15 @@ from fastapi import APIRouter, HTTPException, Depends, Response
 from sqlmodel import Session
 from db.database import get_db
 from models.models import User
+from db.refresh_token import store_refresh_token
 from core.settings import settings
 from core.cryptography import encrypt, decrypt
 from account.auth import signup
 from pwdlib import PasswordHash
 from uuid import uuid4
 from core.hashing import hash_token, verify_token
-from core.auth_handler import create_access_token, create_refresh_token
+from core.auth_handler import create_access_token, create_refresh_token, refresh_token
+from datetime import datetime, timedelta
 
 hasher = PasswordHash.recommended()
 
@@ -60,7 +62,19 @@ def login_endpoint(
             samesite="strict",
             max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
         )
+        store_refresh_token(
+            db,
+            refresh_token,
+            existing.id,
+            jti,
+            datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        )
         return {"access_token": access_token}
 
     else:
         raise HTTPException(status_code=401, detail="Invalid password")
+
+
+@router.post("/refresh")
+def refresh_token(refresh_token: str):
+    new_token = refresh_token()

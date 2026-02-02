@@ -26,7 +26,7 @@ def read_root():
     return {"message": "Hello Asshole"}
 
 
-app.include_router(auth.router)
+app.include_router(auth.router, prefix="/auth")
 
 
 if __name__ == "__main__":

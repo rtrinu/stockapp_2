@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from sqlmodel import SQLModel
 from alembic import context
-from models.models import User
+from models.models import User, RefreshToken
 from core.settings import settings
 
 # this is the Alembic Config object, which provides

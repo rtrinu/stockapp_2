@@ -46,3 +46,11 @@ def decode_jwt(token: str) -> dict | None:
         return None
 
     return payload
+
+
+def refresh_token(refresh_tokeen: str) -> str:
+    payload = jwt.decode(
+        refresh_token, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM
+    )
+    user_id = payload.get("sub")
+    return create_access_token(user_id)
