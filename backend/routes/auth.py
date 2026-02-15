@@ -9,7 +9,11 @@ from account.auth import signup
 from pwdlib import PasswordHash
 from uuid import uuid4
 from core.hashing import hash_token, verify_token
-from core.auth_handler import create_access_token, create_refresh_token, refresh_token
+from core.auth_handler import (
+    create_access_token,
+    create_refresh_token,
+    refresh_access_token,
+)
 from datetime import datetime, timedelta
 
 hasher = PasswordHash.recommended()
@@ -77,4 +81,4 @@ def login_endpoint(
 
 @router.post("/refresh")
 def refresh_token(refresh_token: str):
-    new_token = refresh_token()
+    new_token = refresh_token(refresh_token)

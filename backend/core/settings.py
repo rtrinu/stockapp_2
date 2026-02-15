@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     JWT_SECRET: str
     JWT_ALGORITHM: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    JWT_EXPIRATION_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
 
     @field_validator("ALLOWED_ORIGINS")

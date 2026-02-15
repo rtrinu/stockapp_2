@@ -1,19 +1,16 @@
 from datetime import datetime, timedelta
+import time
 import jwt
+from typing import Dict, Optional
 from core.settings import settings
-from typing import Dict
 
 JWT_SECRET = settings.JWT_SECRET
 JWT_ALGORITHM = settings.JWT_ALGORITHM
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.JWT_EXPIRATION_MINUTES
 REFRESH_TOKEN_EXPIRE_DAYS = settings.REFRESH_TOKEN_EXPIRE_DAYS
 
 
-def token_response(token: str):
-    return {"access_token": token}
-
-
-def create_access_token(user_id: str):
+def create_access_token(user_id: str) -> str:
     payload = {
         "sub": user_id,
         "type": "access",
@@ -22,7 +19,7 @@ def create_access_token(user_id: str):
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-def create_refresh_token(user_id: str, token_id: str):
+def create_refresh_token(user_id: str, token_id: str) -> str:
     payload = {
         "sub": user_id,
         "jti": token_id,
@@ -32,25 +29,24 @@ def create_refresh_token(user_id: str, token_id: str):
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-def decode_jwt(token: str) -> dict | None:
+def decode_jwt(token: str) -> Optional[Dict]:
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=JWT_ALGORITHM)
-    except JWTError:
+        payload = jwt.decode(
+            token,
+            JWT_SECRET,
+            algorithms=[JWT_ALGORITHM],
+            options={"require_exp": True},
+        )
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
         return None
 
-    expires = payload.get("expires")
-    if expires is None:
+
+def refresh_access_token(refresh_token_str: str) -> Optional[str]:
+    payload = decode_jwt(refresh_token_str)
+    if not payload or payload.get("type") != "refresh":
         return None
-
-    if expires < time.time():
-        return None
-
-    return payload
-
-
-def refresh_token(refresh_tokeen: str) -> str:
-    payload = jwt.decode(
-        refresh_token, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM
-    )
     user_id = payload.get("sub")
     return create_access_token(user_id)
