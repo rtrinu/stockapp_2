@@ -1,5 +1,5 @@
 from sqlmodel import Field, SQLModel, Column, DateTime, func
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from typing import Optional
 
@@ -28,7 +28,7 @@ class RefreshToken(Base, table=True):
     jti: str = Field(nullable=False, unique=True, index=True)
     token_hash: str = Field(nullable=False)
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
     last_used_at: datetime | None = Field(default=None)
     expires_at: datetime = Field(nullable=False)
     revoked: bool = Field(default=False)

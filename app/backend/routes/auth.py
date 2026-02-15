@@ -14,7 +14,7 @@ from backend.core.auth_handler import (
     create_refresh_token,
     refresh_access_token,
 )
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 hasher = PasswordHash.recommended()
 
@@ -71,7 +71,8 @@ def login_endpoint(
             refresh_token,
             existing.id,
             jti,
-            datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+            datetime.now(timezone.utc)
+            + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         )
         return {"access_token": access_token}
 

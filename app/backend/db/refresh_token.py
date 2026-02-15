@@ -1,5 +1,5 @@
 from sqlmodel import Session
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 from backend.core.hashing import hash_token
 from backend.models.models import RefreshToken
@@ -18,7 +18,7 @@ def store_refresh_token(
         user_id=user_id,
         jti=jti,
         token_hash=token_hash,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
         expires_at=expires_at,
         revoked=False,
     )

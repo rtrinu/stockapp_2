@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 from typing import List
 
@@ -7,6 +7,8 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
+
     ALPACA_KEY: str
     ALPACA_SECRET: str
     ALPACA_BASE_URL: str
@@ -27,11 +29,6 @@ class Settings(BaseSettings):
     @field_validator("ALLOWED_ORIGINS")
     def parse_allowed_origins(cls, v: str) -> List[str]:
         return v.split(",") if v else []
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
 
 
 settings = Settings()
