@@ -4,9 +4,12 @@ key = Fernet.generate_key()
 f = Fernet(key)
 
 
-def encrypt(token) -> bytes:
-    encrypted_token = f.encrypt(token.encode())
-    return encrypted_token
+def encrypt(secret: str) -> str:
+    if not isinstance(secret, str):
+        raise TypeError("encrypt() expects str")
+    token_bytes = secret.encode("utf-8")
+    encrypted_bytes = f.encrypt(token_bytes)
+    return encrypted_bytes.decode("utf-8")
 
 
 def decrypt(token) -> bytes:

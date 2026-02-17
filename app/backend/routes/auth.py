@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Response
+from fastapi import APIRouter, HTTPException, Depends, Response, Form
 from sqlmodel import Session
 from backend.db.database import get_db
 from backend.models.models import User
@@ -23,10 +23,10 @@ router = APIRouter()
 
 @router.post("/sign-up", status_code=201)
 def signup_endpoint(
-    email: str,
-    password: str,
-    api_key: str,
-    secret_key: str,
+    email: str = Form(...),
+    password: str = Form(...),
+    client_key: str = Form(...),
+    client_secret: str = Form(...),
     db: Session = Depends(get_db),
 ):
     existing = db.query(User).filter(User.email == email).first()
@@ -34,12 +34,17 @@ def signup_endpoint(
         raise HTTPException(status_code=400, detail="User already exists")
 
     hashed_password = hasher.hash(password)
-    encrypted_api_key = encrypt(api_key)
-    encrypted_api_secret = encrypt(secret_key)
+    encrypted_api_key = encrypt(client_key)
+    encrypted_api_secret = encrypt(client_secret)
 
     new_user = signup(
-        db, email, hashed_password, encrypted_api_key, encrypted_api_secret
+        db,
+        email,
+        hashed_password,
+        encrypted_api_key,
+        encrypted_api_secret,
     )
+
     return {"id": new_user.id, "email": new_user.email}
 
 
