@@ -16,3 +16,8 @@ def root():
 @router.get("/home")
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+
+@router.get("/login-page")
+def login_page(request: Request):
+    return templates.TemplateResponse("login_page.html", {"request": request})
