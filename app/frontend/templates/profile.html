@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile — Dashboard</title>
+    <meta name="description" content="Your account profile" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <!-- ====== Navbar ====== -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+      <a href="/" class="navbar-brand">Acme</a>
+      <ul class="navbar-links">
+        <li><a href="/profile.html" class="nav-active">Profile</a></li>
+        <li>
+          <form
+            action="http://localhost:8000/api/logout"
+            method="POST"
+            class="nav-logout-form"
+          >
+            <button type="submit" class="nav-logout-btn">Log out</button>
+          </form>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- ====== Profile Content ====== -->
+    <main class="hero">
+      <div class="profile-container">
+        <!-- Avatar + Name -->
+        <div class="profile-header">
+          <div class="profile-avatar" aria-hidden="true">A</div>
+          <div class="profile-identity">
+            <h1>Acme User</h1>
+            <p>user@example.com</p>
+          </div>
+        </div>
+
+        <!-- Account Details Card -->
+        <div class="profile-card">
+          <h2 class="profile-card-title">Account Details</h2>
+
+          <div class="profile-field">
+            <span class="profile-label">Email</span>
+            <span class="profile-value">user@example.com</span>
+          </div>
+
+          <div class="profile-divider"></div>
+
+          <div class="profile-field">
+            <span class="profile-label">Client Key</span>
+            <span class="profile-value profile-mono">ck_live_abc123def456</span>
+          </div>
+
+          <div class="profile-divider"></div>
+
+          <div class="profile-field">
+            <span class="profile-label">Client Secret</span>
+            <div class="profile-secret-row">
+              <span class="profile-value profile-mono profile-masked"
+                >cs_live_••••••••••••</span
+              >
+            </div>
+          </div>
+
+          <div class="profile-divider"></div>
+
+          <div class="profile-field">
+            <span class="profile-label">Member since</span>
+            <span class="profile-value">February 17, 2026</span>
+          </div>
+        </div>
+
+        <!-- Actions Card -->
+        <div class="profile-card">
+          <h2 class="profile-card-title">Settings</h2>
+
+          <div class="profile-actions">
+            <form
+              action="http://localhost:8000/api/delete-account"
+              method="POST"
+            >
+              <button type="submit" class="btn-danger">Delete Account</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ====== Footer ====== -->
+    <footer class="footer">
+      <p>
+        <a href="#">Privacy</a> &middot; <a href="#">Terms</a> &middot;
+        <a href="#">Support</a>
+      </p>
+    </footer>
+  </body>
+</html>

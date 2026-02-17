@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Response, Form
+from fastapi.responses import RedirectResponse
 from sqlmodel import Session
 from backend.db.database import get_db
 from backend.models.models import User
@@ -45,7 +46,7 @@ def signup_endpoint(
         encrypted_api_secret,
     )
 
-    return {"id": new_user.id, "email": new_user.email}
+    return RedirectResponse(url="/profile", status_code=303)
 
 
 @router.post("/login", status_code=201)
@@ -79,7 +80,7 @@ def login_endpoint(
             datetime.now(timezone.utc)
             + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         )
-        return {"access_token": access_token}
+        return RedirectResponse(url="/profile", status_code=303)
 
     else:
         raise HTTPException(status_code=401, detail="Invalid password")
