@@ -26,3 +26,8 @@ def login_page(request: Request):
 @router.get("/signup-page")
 def signup_page(request: Request):
     return templates.TemplateResponse("signup_page.html", {"request": request})
+
+
+@router.get("/profile")
+def profile_page(request: Request):
+    return templates.TemplateResponse("profile.html", {"request": request})
