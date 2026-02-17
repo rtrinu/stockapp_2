@@ -1,9 +1,11 @@
 from fastapi import FastAPI
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from backend.db.database import engine
 from backend.models.models import User
 from backend.db.database import init_db
-from backend.routes import auth
+from backend.routes import auth, pages
 
 app = FastAPI(
     version="0.1.0",
@@ -20,12 +22,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+templates = Jinja2Templates(directory="frontend/templates")
+app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello Asshole"}
-
-
+app.include_router(pages.router)
 app.include_router(auth.router, prefix="/auth")
 
 
