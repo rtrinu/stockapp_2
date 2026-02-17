@@ -8,8 +8,7 @@ def signup(
     new_user = User(
         email=email,
         hashed_password=password,
-        encrypted_api_key=api_key,
-        encrypted_api_secret=api_secret,
+        encrypted_secret_key=api_secret,
     )
     db.add(new_user)
     db.commit()
