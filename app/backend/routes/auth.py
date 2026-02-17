@@ -51,8 +51,8 @@ def signup_endpoint(
 @router.post("/login", status_code=201)
 def login_endpoint(
     response: Response,
-    email: str,
-    password: str,
+    email: str = Form(...),
+    password: str = Form(...),
     db: Session = Depends(get_db),
 ):
     existing = db.query(User).filter(User.email == email).first()
