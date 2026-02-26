@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,14 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 init_db()
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500, content={"detail": "An unexpected internal error occurred"}
+    )
+
 
 app.add_middleware(
     CORSMiddleware,
