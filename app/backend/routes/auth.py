@@ -24,6 +24,7 @@ router = APIRouter()
 
 @router.post("/sign-up", status_code=201)
 def signup_endpoint(
+    response: Response,
     email: str = Form(...),
     password: str = Form(...),
     client_key: str = Form(...),
@@ -37,16 +38,35 @@ def signup_endpoint(
     hashed_password = hasher.hash(password)
     encrypted_api_key = encrypt(client_key)
     encrypted_api_secret = encrypt(client_secret)
-
-    new_user = signup(
-        db,
-        email,
-        hashed_password,
-        encrypted_api_key,
-        encrypted_api_secret,
+    existing = (
+        db.query(User).filter(User.encrypted_api_key == encrypted_api_key).first()
+        or db.query(User)
+        .filter(User.encrypted_secret_key == encrypted_api_secret)
+        .first()
     )
+    if existing:
+        raise HTTPException(status_code=404, detail="API Key/Secret already in use")
+    else:
+        new_user = signup(
+            db,
+            email,
+            hashed_password,
+            encrypted_api_key,
+            encrypted_api_secret,
+        )
+        access_token = create_access_token(str(new_user.id))
+        jti = str(uuid4())
+        refresh_token = create_refresh_token(str(new_user.id), jti)
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+        )
 
-    return RedirectResponse(url="/profile", status_code=303)
+        return RedirectResponse(url="/profile", status_code=303)
 
 
 @router.post("/login", status_code=201)
@@ -86,6 +106,6 @@ def login_endpoint(
         raise HTTPException(status_code=401, detail="Invalid password")
 
 
-@router.post("/refresh")
-def refresh_token(refresh_token: str):
+@router.post("/refresh-access-token")
+def refresh_access_token(refresh_token: str):
     new_token = refresh_token(refresh_token)

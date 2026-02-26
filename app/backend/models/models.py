@@ -19,6 +19,7 @@ class User(Base, table=True):
     # is_active: bool = Field(default=True)
     encrypted_api_key: Optional[str] = None
     encrypted_secret_key: Optional[str] = None
+    hashed_secret_key: Optional[str] = None
 
 
 class RefreshToken(Base, table=True):
