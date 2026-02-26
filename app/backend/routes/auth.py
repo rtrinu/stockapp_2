@@ -38,35 +38,34 @@ def signup_endpoint(
     hashed_password = hasher.hash(password)
     encrypted_api_key = encrypt(client_key)
     encrypted_api_secret = encrypt(client_secret)
+    hashed_secret_key = hasher.hash(client_secret)
     existing = (
-        db.query(User).filter(User.encrypted_api_key == encrypted_api_key).first()
-        or db.query(User)
-        .filter(User.encrypted_secret_key == encrypted_api_secret)
-        .first()
+        db.query(User).filter(User.hashed_secret_key == hashed_secret_key).first()
     )
     if existing:
-        raise HTTPException(status_code=404, detail="API Key/Secret already in use")
-    else:
-        new_user = signup(
-            db,
-            email,
-            hashed_password,
-            encrypted_api_key,
-            encrypted_api_secret,
-        )
-        access_token = create_access_token(str(new_user.id))
-        jti = str(uuid4())
-        refresh_token = create_refresh_token(str(new_user.id), jti)
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            httponly=True,
-            secure=True,
-            samesite="strict",
-            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
-        )
+        raise HTTPException(status_code=400, detail="API Key/Secret already in use")
 
-        return RedirectResponse(url="/profile", status_code=303)
+    new_user = signup(
+        db,
+        email,
+        hashed_password,
+        encrypted_api_key,
+        encrypted_api_secret,
+        hashed_secret_key,
+    )
+    access_token = create_access_token(str(new_user.id))
+    jti = str(uuid4())
+    refresh_token = create_refresh_token(str(new_user.id), jti)
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+    )
+
+    return RedirectResponse(url="/profile", status_code=303)
 
 
 @router.post("/login", status_code=201)
