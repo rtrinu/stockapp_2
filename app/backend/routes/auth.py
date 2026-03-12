@@ -93,6 +93,13 @@ def login_endpoint(
             samesite="strict",
             max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
         )
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+        )
         store_refresh_token(
             db,
             refresh_token,
@@ -101,7 +108,7 @@ def login_endpoint(
             datetime.now(timezone.utc)
             + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         )
-        return {"access_token": access_token, "token_type": "bearer"}
+        return {"access_token": access_token, "token_type": "Bearer"}
 
     else:
         raise HTTPException(status_code=401, detail="Invalid password")
@@ -119,9 +126,11 @@ def refresh_access_token_endpoint(request: Request):
 
 
 def get_current_user(request: Request):
-    auth = request.headers.get("Authorization")
-    if not auth or not auth.startswith("Bearer "):
+    token = request.cookies.get("access_token")
+    if not token:
         raise HTTPException(status_code=401)
-    token = auth.split(" ")[1]
-    user_id = decode_jwt(token)
+    access_token = decode_jwt(token)
+    user_id = access_token.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401)
     return user_id
