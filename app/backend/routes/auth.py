@@ -136,6 +136,13 @@ def login_endpoint(
         raise HTTPException(status_code=401, detail="Invalid password")
 
 
+@router.post("/logout", status_code=202)
+def logout_endpoint(response: Response, request: Request):
+    response.delete_cookie(key="access_token")
+    response.delete_cookie(key="refresh_token")
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
 @router.post("/refresh-access-token")
 def refresh_access_token_endpoint(request: Request):
     refresh_token = request.cookies.get("refresh_token")
@@ -197,6 +204,5 @@ def get_current_user(
     user_id = decode_jwt(token).get("sub")
     if not user_id:
         raise HTTPException(status_code=401)
-
     user = db.query(User).get(user_id)
     return user
