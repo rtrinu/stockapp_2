@@ -27,6 +27,8 @@ router = APIRouter()
 @router.post("/sign-up", status_code=201)
 def signup_endpoint(
     response: Response,
+    first_name: str = Form(...),
+    last_name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
     client_key: str = Form(...),
@@ -51,6 +53,8 @@ def signup_endpoint(
     else:
         new_user = signup(
             db,
+            first_name,
+            last_name,
             email,
             hashed_password,
             encrypted_api_key,
@@ -67,8 +71,24 @@ def signup_endpoint(
             samesite="strict",
             max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
         )
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=settings.JWT_EXPIRATION_MINUTES,
+        )
+        store_refresh_token(
+            db,
+            refresh_token,
+            new_user.id,
+            jti,
+            datetime.now(timezone.utc)
+            + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        )
 
-        return RedirectResponse(url="/profile", status_code=303)
+        return RedirectResponse(url="/client/profile", status_code=303)
 
 
 @router.post("/login", status_code=201)
