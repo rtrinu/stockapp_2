@@ -16,6 +16,7 @@ from backend.core.auth_handler import (
     refresh_access_token,
     decode_jwt,
 )
+import jwt
 from datetime import datetime, timedelta, timezone
 
 hasher = PasswordHash.recommended()
@@ -99,6 +100,7 @@ def login_endpoint(
             httponly=True,
             secure=True,
             samesite="strict",
+            max_age=settings.JWT_EXPIRATION_MINUTES,
         )
         store_refresh_token(
             db,
@@ -108,7 +110,7 @@ def login_endpoint(
             datetime.now(timezone.utc)
             + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         )
-        return {"access_token": access_token, "token_type": "Bearer"}
+        return RedirectResponse(url="/client/profile", status_code=303)
 
     else:
         raise HTTPException(status_code=401, detail="Invalid password")
@@ -122,15 +124,59 @@ def refresh_access_token_endpoint(request: Request):
     new_access = refresh_access_token(refresh_token)
     if not new_access:
         raise HTTPException(status_code=401)
-    return {"access_token": new_access}
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+    )
 
 
-def get_current_user(request: Request):
+def get_or_refresh_access_token(request: Request, response: Response):
     token = request.cookies.get("access_token")
+    if token:
+        try:
+            payload = jwt.decode(
+                token,
+                settings.JWT_SECRET,
+                algorithms=[settings.JWT_ALGORITHM],
+                options={"verify_exp": False},
+            )
+            exp = payload.get("exp")
+            if exp:
+                if datetime.fromtimestamp(exp, timezone.utc) > datetime.now(
+                    timezone.utc
+                ):
+                    return token
+        except jwt.InvalidTokenError:
+            pass
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        return None
+    new_access = refresh_access_token(refresh_token)
+    if not new_access:
+        return None
+    response.set_cookie(
+        key="access_token",
+        value=new_access,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+    )
+    return new_access
+
+
+def get_current_user(
+    request: Request, response: Response, db: Session = Depends(get_db)
+):
+    token = get_or_refresh_access_token(request, response)
     if not token:
         raise HTTPException(status_code=401)
-    access_token = decode_jwt(token)
-    user_id = access_token.get("sub")
+
+    user_id = decode_jwt(token).get("sub")
     if not user_id:
         raise HTTPException(status_code=401)
-    return user_id
+
+    user = db.query(User).get(user_id)
+    return user
