@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Response, Form
+from fastapi import APIRouter, HTTPException, Depends, Response, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlmodel import Session
 from backend.db.database import get_db
@@ -14,6 +14,7 @@ from backend.core.auth_handler import (
     create_access_token,
     create_refresh_token,
     refresh_access_token,
+    decode_jwt,
 )
 from datetime import datetime, timedelta, timezone
 
@@ -45,7 +46,7 @@ def signup_endpoint(
         .first()
     )
     if existing:
-        raise HTTPException(status_code=404, detail="API Key/Secret already in use")
+        raise HTTPException(status_code=400, detail="API Key/Secret already in use")
     else:
         new_user = signup(
             db,
@@ -100,12 +101,27 @@ def login_endpoint(
             datetime.now(timezone.utc)
             + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         )
-        return RedirectResponse(url="/profile", status_code=303)
+        return {"access_token": access_token, "token_type": "bearer"}
 
     else:
         raise HTTPException(status_code=401, detail="Invalid password")
 
 
 @router.post("/refresh-access-token")
-def refresh_access_token(refresh_token: str):
-    new_token = refresh_token(refresh_token)
+def refresh_access_token_endpoint(request: Request):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=401)
+    new_access = refresh_access_token(refresh_token)
+    if not new_access:
+        raise HTTPException(status_code=401)
+    return {"access_token": new_access}
+
+
+def get_current_user(request: Request):
+    auth = request.headers.get("Authorization")
+    if not auth or not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401)
+    token = auth.split(" ")[1]
+    user_id = decode_jwt(token)
+    return user_id
