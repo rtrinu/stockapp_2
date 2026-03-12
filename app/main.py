@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -7,6 +7,7 @@ from backend.db.database import engine
 from backend.models.models import User
 from backend.db.database import init_db
 from backend.routes import auth, pages, user
+from backend.routes.auth import logout_endpoint
 
 app = FastAPI(
     version="0.1.0",
@@ -15,12 +16,35 @@ app = FastAPI(
 )
 init_db()
 
+templates = Jinja2Templates(directory="frontend/templates")
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500, content={"detail": "An unexpected internal error occurred"}
+    status_code = 500
+    error_message = "An unexpected internal server error occurred."
+    error_title = "Internal Server Error"
+
+    if isinstance(exc, HTTPException):
+        status_code = exc.status_code
+        error_message = exc.detail
+        error_title = f"{exc.status_code} Error"
+
+    return templates.TemplateResponse(
+        "error.html",
+        {
+            "request": request,
+            "error_code": status_code,
+            "error_title": error_title,
+            "error_message": error_message,
+        },
+        status_code=status_code,
     )
+
+
+# return JSONResponse(
+#     status_code=500, content={"detail": "An unexpected internal error occurred"}
+# )
 
 
 app.add_middleware(
