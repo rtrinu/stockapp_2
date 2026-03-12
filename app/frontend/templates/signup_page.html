@@ -29,6 +29,26 @@
         <!-- Signup form — posts directly to FastAPI -->
         <form action="/auth/sign-up" method="POST" class="login-form">
           <div class="form-group">
+            <div class="form-group">
+              <label for="first_name">First Name</label>
+              <input
+                type="text"
+                id="first_name"
+                name="first_name"
+                placeholder="Zain"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="last_name">Last Name</label>
+              <input
+                type="text"
+                id="last_name"
+                name="last_name"
+                placeholder="Ahmed"
+                required
+              />
+            </div>
             <label for="email">Email</label>
             <input
               type="email"

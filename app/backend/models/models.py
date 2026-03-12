@@ -15,11 +15,13 @@ class Base(SQLModel):
 
 class User(Base, table=True):
     email: str = Field(unique=True, index=True, nullable=False)
+    first_name: str = Field(nullable=False)
+    last_name: str = Field(nullable=False)
     hashed_password: str = Field(nullable=False)
     # is_active: bool = Field(default=True)
     encrypted_api_key: Optional[str] = None
     encrypted_secret_key: Optional[str] = None
-    hashed_secret_key: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
 
 
 class RefreshToken(Base, table=True):

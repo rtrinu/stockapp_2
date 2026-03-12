@@ -1,21 +1,26 @@
 from backend.models.models import User
 from sqlmodel import Session
+from datetime import datetime, timezone
 
 
 def signup(
     db: Session,
+    first_name: str,
+    last_name: str,
     email: str,
     password: str,
     api_key: str,
     api_secret: str,
-    hashed_secret_key: str,
 ) -> User:
+    created_at = datetime.now(timezone.utc)
     new_user = User(
         email=email,
+        first_name=first_name,
+        last_name=last_name,
         hashed_password=password,
         encrypted_api_key=api_key,
         encrypted_secret_key=api_secret,
-        hashed_secret_key=hashed_secret_key,
+        created_at=created_at,
     )
     try:
         db.add(new_user)

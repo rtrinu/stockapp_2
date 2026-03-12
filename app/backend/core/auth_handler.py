@@ -11,21 +11,26 @@ REFRESH_TOKEN_EXPIRE_DAYS = settings.REFRESH_TOKEN_EXPIRE_DAYS
 
 
 def create_access_token(user_id: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    now = datetime.now(timezone.utc)
     payload = {
         "sub": user_id,
         "type": "access",
-        "exp": datetime.now(timezone.utc)
-        + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        "iat": now,
+        "exp": expire,
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
 def create_refresh_token(user_id: str, token_id: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    now = datetime.now(timezone.utc)
     payload = {
         "sub": user_id,
         "jti": token_id,
         "type": "refresh",
-        "exp": datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+        "iat": now,
+        "exp": expire,
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
@@ -53,5 +58,5 @@ def refresh_access_token(refresh_token_str: str) -> Optional[str]:
         return None
     if not payload.get("jti"):
         return None
-    user_id = payload.get("sub")
+    user_id = payload["sub"]
     return create_access_token(user_id)

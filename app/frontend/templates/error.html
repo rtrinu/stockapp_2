@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ error_code }} — {{ error_title }}</title>
+    <meta name="description" content="{{ error_message }}" />
+    <link rel="stylesheet" href="/static/error.css" />
+  </head>
+  <body>
+    <main class="error-page">
+      <div class="error-container">
+        <div class="error-code">{{ error_code }}</div>
+        <h1 class="error-title">{{ error_title }}</h1>
+        <p class="error-message">{{ error_message }}</p>
+        <div class="error-actions">
+          <a href="/home" class="btn-primary">Go Home</a>
+        </div>
+      </div>
+    </main>
+    <footer class="footer">
+      <p>
+        <a href="#">Privacy</a> &middot; <a href="#">Terms</a> &middot;
+        <a href="#">Support</a>
+      </p>
+    </footer>
+  </body>
+</html>
