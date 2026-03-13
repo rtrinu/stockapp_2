@@ -106,6 +106,7 @@ def login_endpoint(
         access_token = create_access_token(str(existing.id))
         jti = str(uuid4())
         refresh_token = create_refresh_token(str(existing.id), jti)
+        response = RedirectResponse("/client/profile", status_code=303)
         response.set_cookie(
             key="refresh_token",
             value=refresh_token,
@@ -113,6 +114,7 @@ def login_endpoint(
             secure=True,
             samesite="strict",
             max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+            path="/",
         )
         response.set_cookie(
             key="access_token",
@@ -120,7 +122,8 @@ def login_endpoint(
             httponly=True,
             secure=True,
             samesite="strict",
-            max_age=settings.JWT_EXPIRATION_MINUTES,
+            max_age=settings.JWT_EXPIRATION_MINUTES * 60,
+            path="/",
         )
         store_refresh_token(
             db,
@@ -130,17 +133,21 @@ def login_endpoint(
             datetime.now(timezone.utc)
             + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         )
-        return RedirectResponse(url="/client/profile", status_code=303)
+        return response
 
     else:
         raise HTTPException(status_code=401, detail="Invalid password")
 
 
-@router.post("/logout", status_code=202)
-def logout_endpoint(response: Response, request: Request):
-    response.delete_cookie(key="access_token")
-    response.delete_cookie(key="refresh_token")
-    return templates.TemplateResponse("index.html", {"request": request})
+@router.get(
+    "/logout",
+    status_code=202,
+)
+def logout_endpoint(response: Response):
+    response = RedirectResponse("/home", status_code=303)
+    response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
+    return response
 
 
 @router.post("/refresh-access-token")
