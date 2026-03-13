@@ -47,10 +47,12 @@ def test_signup_creates_user(client):
     response = client.post(
         "/auth/sign-up",
         data={
-            "email": "user1@example.com",
-            "password": "password123",
-            "client_key": "abc123",
-            "client_secret": "secret123",
+            "first_name": "Jane",
+            "last_name": "Doe",
+            "email": "wrongpass@example.com",
+            "password": "RightPass!",
+            "client_key": "a",
+            "client_secret": "b",
         },
     )
     assert response.status_code == 201
@@ -61,6 +63,8 @@ def test_signup_creates_user(client):
 
 def test_signup_duplicate_email(client):
     payload = {
+        "first_name": "john",
+        "last_name": "doe",
         "email": "dup@example.com",
         "password": "pass",
         "client_key": "k",

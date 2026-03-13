@@ -8,6 +8,7 @@ from backend.models.models import User
 from backend.db.database import init_db
 from backend.routes import auth, pages, user
 from backend.routes.auth import logout_endpoint
+from pathlib import Path
 
 app = FastAPI(
     version="0.1.1",
@@ -25,7 +26,8 @@ app.add_middleware(
 )
 
 templates = Jinja2Templates(directory="frontend/templates")
-app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
+static_path = Path(__file__).parent / "frontend/static"
+app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 app.include_router(pages.router)
 app.include_router(auth.router, prefix="/auth")
