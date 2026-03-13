@@ -63,6 +63,7 @@ def signup_endpoint(
         access_token = create_access_token(str(new_user.id))
         jti = str(uuid4())
         refresh_token = create_refresh_token(str(new_user.id), jti)
+        response = RedirectResponse(url="/client/profile", status_code=303)
         response.set_cookie(
             key="refresh_token",
             value=refresh_token,
@@ -70,6 +71,7 @@ def signup_endpoint(
             secure=True,
             samesite="strict",
             max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+            path="/",
         )
         response.set_cookie(
             key="access_token",
@@ -78,6 +80,7 @@ def signup_endpoint(
             secure=True,
             samesite="strict",
             max_age=settings.JWT_EXPIRATION_MINUTES,
+            path="/",
         )
         store_refresh_token(
             db,
@@ -88,7 +91,7 @@ def signup_endpoint(
             + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         )
 
-        return RedirectResponse(url="/client/profile", status_code=303)
+        return response
 
 
 @router.post("/login", status_code=201)
@@ -106,6 +109,7 @@ def login_endpoint(
         access_token = create_access_token(str(existing.id))
         jti = str(uuid4())
         refresh_token = create_refresh_token(str(existing.id), jti)
+        response = RedirectResponse("/client/profile", status_code=303)
         response.set_cookie(
             key="refresh_token",
             value=refresh_token,
@@ -113,6 +117,7 @@ def login_endpoint(
             secure=True,
             samesite="strict",
             max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+            path="/",
         )
         response.set_cookie(
             key="access_token",
@@ -120,7 +125,8 @@ def login_endpoint(
             httponly=True,
             secure=True,
             samesite="strict",
-            max_age=settings.JWT_EXPIRATION_MINUTES,
+            max_age=settings.JWT_EXPIRATION_MINUTES * 60,
+            path="/",
         )
         store_refresh_token(
             db,
@@ -130,34 +136,21 @@ def login_endpoint(
             datetime.now(timezone.utc)
             + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         )
-        return RedirectResponse(url="/client/profile", status_code=303)
+        return response
 
     else:
         raise HTTPException(status_code=401, detail="Invalid password")
 
 
-@router.post("/logout", status_code=202)
-def logout_endpoint(response: Response, request: Request):
-    response.delete_cookie(key="access_token")
-    response.delete_cookie(key="refresh_token")
-    return templates.TemplateResponse("index.html", {"request": request})
-
-
-@router.post("/refresh-access-token")
-def refresh_access_token_endpoint(request: Request):
-    refresh_token = request.cookies.get("refresh_token")
-    if not refresh_token:
-        raise HTTPException(status_code=401)
-    new_access = refresh_access_token(refresh_token)
-    if not new_access:
-        raise HTTPException(status_code=401)
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-    )
+@router.get(
+    "/logout",
+    status_code=202,
+)
+def logout_endpoint(response: Response):
+    response = RedirectResponse("/home", status_code=303)
+    response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
+    return response
 
 
 def get_or_refresh_access_token(request: Request, response: Response):
@@ -190,6 +183,8 @@ def get_or_refresh_access_token(request: Request, response: Response):
         httponly=True,
         secure=True,
         samesite="strict",
+        max_age=settings.JWT_EXPIRATION_MINUTES * 60,
+        path="/",
     )
     return new_access
 
@@ -206,3 +201,17 @@ def get_current_user(
         raise HTTPException(status_code=401)
     user = db.query(User).get(user_id)
     return user
+
+
+@router.get("/delete-account")
+def delete_account(
+    response: Response,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    db.delete(user)
+    db.commit()
+
+    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/")
+    return {"message": "User deleted successfully"}

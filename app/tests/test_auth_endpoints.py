@@ -7,6 +7,7 @@ from sqlmodel.pool import StaticPool
 
 from main import app
 from backend.db.database import get_db
+from backend.routes.auth import create_access_token
 
 # ——————————————— Setup in‑memory test DB ————————————————
 TEST_DATABASE_URL = "sqlite://"
@@ -35,9 +36,16 @@ def client_fixture(session: Session):
             session.close()
 
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as client:
+    with TestClient(app, follow_redirects=False) as client:
         yield client
     app.dependency_overrides.clear()
+
+
+# ——————————————— Helper to set cookie ————————————————
+def set_access_cookie(client, user_id: str):
+    token = create_access_token(user_id)
+    client.cookies.set("access_token", token, path="/")
+    return token
 
 
 # ——————————————— Tests ————————————————
@@ -47,27 +55,34 @@ def test_signup_creates_user(client):
     response = client.post(
         "/auth/sign-up",
         data={
+            "first_name": "Jane",
+            "last_name": "Doe",
             "email": "user1@example.com",
-            "password": "password123",
-            "client_key": "abc123",
-            "client_secret": "secret123",
+            "password": "RightPass!",
+            "client_key": "a",
+            "client_secret": "b",
         },
     )
-    assert response.status_code == 201
-    body = response.json()
-    assert "id" in body
-    assert body["email"] == "user1@example.com"
+    # RedirectResponse status_code is 303
+    assert response.status_code == 303
+
+    # Grab the set cookies for follow-up requests
+    access_token = response.cookies.get("access_token")
+    assert access_token is not None
+    client.cookies.set("access_token", access_token, path="/")
 
 
 def test_signup_duplicate_email(client):
     payload = {
+        "first_name": "John",
+        "last_name": "Doe",
         "email": "dup@example.com",
         "password": "pass",
         "client_key": "k",
         "client_secret": "s",
     }
     r1 = client.post("/auth/sign-up", data=payload)
-    assert r1.status_code == 201
+    assert r1.status_code == 303
 
     r2 = client.post("/auth/sign-up", data=payload)
     assert r2.status_code == 400
@@ -76,35 +91,41 @@ def test_signup_duplicate_email(client):
 
 def test_login_succeeds(client):
     signup_data = {
+        "first_name": "Alice",
+        "last_name": "Smith",
         "email": "loginok@example.com",
         "password": "Correct123!",
         "client_key": "keyX",
         "client_secret": "secretX",
     }
-    assert client.post("/auth/sign-up", data=signup_data).status_code == 201
+    r = client.post("/auth/sign-up", data=signup_data)
+    assert r.status_code == 303
+
+    # Manually set the cookie
+    access_token = r.cookies.get("access_token")
+    client.cookies.set("access_token", access_token, path="/")
 
     login_data = {
         "email": "loginok@example.com",
         "password": "Correct123!",
     }
     response = client.post("/auth/login", data=login_data)
-    assert response.status_code == 201
-
-    body = response.json()
-    assert "access_token" in body
-    assert isinstance(body["access_token"], str)
+    assert response.status_code == 303  # RedirectResponse again
+    assert "access_token" in response.cookies
+    assert response.cookies.get("access_token") is not None
 
 
 def test_login_wrong_password(client):
-    client.post(
-        "/auth/sign-up",
-        data={
-            "email": "wrongpass@example.com",
-            "password": "RightPass!",
-            "client_key": "a",
-            "client_secret": "b",
-        },
-    )
+    signup_data = {
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "email": "wrongpass@example.com",
+        "password": "RightPass!",
+        "client_key": "a",
+        "client_secret": "b",
+    }
+    client.post("/auth/sign-up", data=signup_data)
+
     bad_login = {
         "email": "wrongpass@example.com",
         "password": "WrongPass!",

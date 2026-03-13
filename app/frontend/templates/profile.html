@@ -14,13 +14,7 @@
       <ul class="navbar-links">
         <li><a href="/profile.html" class="nav-active">Profile</a></li>
         <li>
-          <form
-            action="http://localhost:8000/api/logout"
-            method="POST"
-            class="nav-logout-form"
-          >
-            <button type="submit" class="nav-logout-btn">Log out</button>
-          </form>
+          <a href="/auth/logout">Log out</a>
         </li>
       </ul>
     </nav>
@@ -32,8 +26,7 @@
         <div class="profile-header">
           <div class="profile-avatar" aria-hidden="true">A</div>
           <div class="profile-identity">
-            <h1>Acme User</h1>
-            <p>user@example.com</p>
+            <h1>{{user.first_name}} {{user.last_name}}</h1>
           </div>
         </div>
 
@@ -42,8 +35,8 @@
           <h2 class="profile-card-title">Account Details</h2>
 
           <div class="profile-field">
-            <span class="profile-label">Email</span>
-            <span class="profile-value">user@example.com</span>
+            <span class="profile-label">Email: </span>
+            <span class="profile-value">{{user.email}}/span>
           </div>
 
           <div class="profile-divider"></div>
@@ -67,8 +60,8 @@
           <div class="profile-divider"></div>
 
           <div class="profile-field">
-            <span class="profile-label">Member since</span>
-            <span class="profile-value">February 17, 2026</span>
+            <span class="profile-label">Member since: </span>
+            <span class="profile-value">{{created_at_str}}</span>
           </div>
         </div>
 
@@ -77,11 +70,8 @@
           <h2 class="profile-card-title">Settings</h2>
 
           <div class="profile-actions">
-            <form
-              action="http://localhost:8000/api/delete-account"
-              method="POST"
-            >
-              <button type="submit" class="btn-danger">Delete Account</button>
+            <form action="/auth/delete-account" method="post">
+              <button type="submit">Delete Account</button>
             </form>
           </div>
         </div>
