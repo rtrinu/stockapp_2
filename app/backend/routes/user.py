@@ -20,7 +20,7 @@ templates = Jinja2Templates(directory="frontend/templates")
 
 @router.get("/profile")
 def profile(request: Request, user: User = Depends(get_current_user)):
-    formatted_date = user.created_at.strftime("%Y-%m-%d")
+    formatted_date = user.created_at.strftime("%d-%m-%Y")
     return templates.TemplateResponse(
         "profile.html",
         {"request": request, "user": user, "created_at_str": formatted_date},

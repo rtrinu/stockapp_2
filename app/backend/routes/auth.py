@@ -150,23 +150,6 @@ def logout_endpoint(response: Response):
     return response
 
 
-@router.post("/refresh-access-token")
-def refresh_access_token_endpoint(request: Request):
-    refresh_token = request.cookies.get("refresh_token")
-    if not refresh_token:
-        raise HTTPException(status_code=401)
-    new_access = refresh_access_token(refresh_token)
-    if not new_access:
-        raise HTTPException(status_code=401)
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-    )
-
-
 def get_or_refresh_access_token(request: Request, response: Response):
     token = request.cookies.get("access_token")
     if token:
@@ -197,6 +180,8 @@ def get_or_refresh_access_token(request: Request, response: Response):
         httponly=True,
         secure=True,
         samesite="strict",
+        max_age=settings.JWT_EXPIRATION_MINUTES * 60,
+        path="/",
     )
     return new_access
 
@@ -213,3 +198,17 @@ def get_current_user(
         raise HTTPException(status_code=401)
     user = db.query(User).get(user_id)
     return user
+
+
+@router.get("/delete-account")
+def delete_account(
+    response: Response,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    db.delete(user)
+    db.commit()
+
+    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/")
+    return {"message": "User deleted successfully"}

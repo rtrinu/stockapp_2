@@ -1,7 +1,7 @@
-from sqlmodel import Field, SQLModel, Column, DateTime, func
+from sqlmodel import Field, SQLModel, Column, DateTime, func, Relationship
 from datetime import datetime, timezone
 import uuid
-from typing import Optional
+from typing import Optional, List
 
 
 class Base(SQLModel):
@@ -23,6 +23,10 @@ class User(Base, table=True):
     encrypted_secret_key: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
 
+    refresh_tokens: List["RefreshToken"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
+
 
 class RefreshToken(Base, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -35,3 +39,5 @@ class RefreshToken(Base, table=True):
     last_used_at: datetime | None = Field(default=None)
     expires_at: datetime = Field(nullable=False)
     revoked: bool = Field(default=False)
+
+    user: User = Relationship(back_populates="refresh_tokens")
