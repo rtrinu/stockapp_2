@@ -63,6 +63,7 @@ def signup_endpoint(
         access_token = create_access_token(str(new_user.id))
         jti = str(uuid4())
         refresh_token = create_refresh_token(str(new_user.id), jti)
+        response = RedirectResponse(url="/client/profile", status_code=303)
         response.set_cookie(
             key="refresh_token",
             value=refresh_token,
@@ -70,6 +71,7 @@ def signup_endpoint(
             secure=True,
             samesite="strict",
             max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+            path="/",
         )
         response.set_cookie(
             key="access_token",
@@ -78,6 +80,7 @@ def signup_endpoint(
             secure=True,
             samesite="strict",
             max_age=settings.JWT_EXPIRATION_MINUTES,
+            path="/",
         )
         store_refresh_token(
             db,
@@ -88,7 +91,7 @@ def signup_endpoint(
             + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         )
 
-        return RedirectResponse(url="/client/profile", status_code=303)
+        return response
 
 
 @router.post("/login", status_code=201)
