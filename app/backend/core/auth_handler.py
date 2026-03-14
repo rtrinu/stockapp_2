@@ -60,3 +60,16 @@ def refresh_access_token(refresh_token_str: str) -> Optional[str]:
         return None
     user_id = payload["sub"]
     return create_access_token(user_id)
+
+
+def is_token_not_expired(refresh_token_str: str) -> bool:
+    try:
+        payload = decode_jwt(refresh_token_str)
+        exp_timestamp = payload.get("exp")
+        if not exp_timestamp:
+            return False
+        expires_at = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
+        now = datetime.now(timezone.utc)
+        return expires_at > now
+    except Exception:
+        return False
