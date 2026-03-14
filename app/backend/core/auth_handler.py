@@ -65,8 +65,11 @@ def refresh_access_token(refresh_token_str: str) -> Optional[str]:
 def is_token_not_expired(refresh_token_str: str) -> bool:
     try:
         payload = decode_jwt(refresh_token_str)
-        expires_at = payload["expires_at"]
-        return expires_at > datetime.now(timezone.utc)
-
+        exp_timestamp = payload.get("exp")
+        if not exp_timestamp:
+            return False
+        expires_at = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
+        now = datetime.now(timezone.utc)
+        return expires_at > now
     except Exception:
         return False

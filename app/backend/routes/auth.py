@@ -118,8 +118,7 @@ def login_endpoint(
             httponly=True,
             secure=True,
             samesite="strict",
-            # max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
-            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS,
+            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
             path="/",
         )
         response.set_cookie(
@@ -156,7 +155,7 @@ def logout_endpoint(response: Response):
     return response
 
 
-def get_or_refresh_access_token(request: Request, response: Response):
+def get_or_refresh_access_token(request: Request, response: Response, db: Session):
     token = request.cookies.get("access_token")
     if token:
         try:
@@ -174,12 +173,21 @@ def get_or_refresh_access_token(request: Request, response: Response):
                     return token
         except jwt.InvalidTokenError:
             pass
+        except jwt.ExpiredSignatureError:
+            pass
+
     refresh_token = request.cookies.get("refresh_token")
+
     if not refresh_token:
+        return None
+
+    valid_refresh_token = validate_or_revoke_refresh_token(request, db)
+    if not valid_refresh_token:
         return None
     new_access = refresh_access_token(refresh_token)
     if not new_access:
         return None
+
     response.set_cookie(
         key="access_token",
         value=new_access,
@@ -195,7 +203,7 @@ def get_or_refresh_access_token(request: Request, response: Response):
 def get_current_user(
     request: Request, response: Response, db: Session = Depends(get_db)
 ):
-    token = get_or_refresh_access_token(request, response)
+    token = get_or_refresh_access_token(request, response, db)
     if not token:
         raise HTTPException(status_code=401)
 
@@ -220,10 +228,7 @@ def delete_account(
     return {"message": "User deleted successfully"}
 
 
-@router.get("/validate")
 def validate_or_revoke_refresh_token(request: Request, db: Session = Depends(get_db)):
-    token = request.cookies.get("refresh_token")
-    print(token)
     if not token:
         raise HTTPException(status_code=401, detail="No refresh token found")
     is_token_valid = is_token_not_expired(token)
@@ -231,7 +236,7 @@ def validate_or_revoke_refresh_token(request: Request, db: Session = Depends(get
     if not user_id:
         raise HTTPException(status_code=401, detail="Malformed refresh token")
     if is_token_valid:
-        return {"detail": "Refresh token is valid"}
+        return True
     else:
         result = revoke_refresh_token(db, user_id)
-        return {"detail": "Refresh token has been revoked"}
+        return False
