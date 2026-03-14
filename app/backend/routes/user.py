@@ -13,11 +13,6 @@ router = APIRouter()
 templates = Jinja2Templates(directory="frontend/templates")
 
 
-# @router.get("/me")
-# def get_me(user_id: str = Depends(get_current_user)):
-#     return {"user_id": user_id}
-
-
 @router.get("/profile")
 def profile(request: Request, user: User = Depends(get_current_user)):
     formatted_date = user.created_at.strftime("%d-%m-%Y")

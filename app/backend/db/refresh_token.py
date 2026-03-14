@@ -1,4 +1,4 @@
-from sqlmodel import Session
+from sqlmodel import Session, select
 from datetime import datetime, timezone
 from uuid import UUID
 from backend.core.hashing import hash_token
@@ -28,3 +28,17 @@ def store_refresh_token(
     db.refresh(db_token)
 
     return db_token
+
+
+def revoke_refresh_token(
+    db: Session,
+    user_id: UUID,
+):
+    refresh_token = db.exec(
+        select(RefreshToken).where(RefreshToken.user_id == user_id)
+    ).first()
+    if not refresh_token:
+        return {"detail": "No refresh token associated with user found"}
+    refresh_token.revoked = True
+    db.commit()
+    return refresh_token

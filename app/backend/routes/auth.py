@@ -15,9 +15,11 @@ from backend.core.auth_handler import (
     create_refresh_token,
     refresh_access_token,
     decode_jwt,
+    is_token_not_expired,
 )
 import jwt
 from datetime import datetime, timedelta, timezone
+from backend.db.refresh_token import revoke_refresh_token
 
 hasher = PasswordHash.recommended()
 
@@ -116,7 +118,8 @@ def login_endpoint(
             httponly=True,
             secure=True,
             samesite="strict",
-            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+            # max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS,
             path="/",
         )
         response.set_cookie(
@@ -215,3 +218,20 @@ def delete_account(
     response.delete_cookie("access_token", path="/")
     response.delete_cookie("refresh_token", path="/")
     return {"message": "User deleted successfully"}
+
+
+@router.get("/validate")
+def validate_or_revoke_refresh_token(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("refresh_token")
+    print(token)
+    if not token:
+        raise HTTPException(status_code=401, detail="No refresh token found")
+    is_token_valid = is_token_not_expired(token)
+    user_id = decode_jwt(token).get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Malformed refresh token")
+    if is_token_valid:
+        return {"detail": "Refresh token is valid"}
+    else:
+        result = revoke_refresh_token(db, user_id)
+        return {"detail": "Refresh token has been revoked"}
