@@ -6,12 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.db.database import engine
 from backend.models.models import User
 from backend.db.database import init_db
-from backend.routes import auth, pages, user
+from auth.router import router as auth_router
 from backend.routes.auth import logout_endpoint
 from pathlib import Path
 
 app = FastAPI(
-    version="0.1.1",
+    version="0.1.2",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -30,7 +30,7 @@ static_path = Path(__file__).parent / "frontend/static"
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 app.include_router(pages.router)
-app.include_router(auth.router, prefix="/auth")
+app.include_router(auth_router, prefix="/api/v1")
 app.include_router(user.router, prefix="/client")
 
 
