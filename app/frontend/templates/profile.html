@@ -9,12 +9,15 @@
   </head>
   <body>
     <!-- ====== Navbar ====== -->
+
     <nav class="navbar" role="navigation" aria-label="Main navigation">
       <a href="/" class="navbar-brand">Acme</a>
       <ul class="navbar-links">
         <li><a href="/profile.html" class="nav-active">Profile</a></li>
         <li>
-          <a href="/api/v1/logout">Log out</a>
+          <form action="/api/v1/logout" method="POST" style="display: inline">
+            <button type="submit">Log out</button>
+          </form>
         </li>
       </ul>
     </nav>

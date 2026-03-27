@@ -10,6 +10,7 @@ from backend.auth.dependencies import (
     refresh_tokens,
     validate_user,
 )
+from backend.auth.tokens import generate_tokens
 from backend.core.settings import settings
 from datetime import datetime, timezone, timedelta
 from backend.auth.db import hash_and_store_refresh_token
