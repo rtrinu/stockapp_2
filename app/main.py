@@ -6,8 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.db.database import engine
 from backend.models.models import User
 from backend.db.database import init_db
-from auth.router import router as auth_router
-from backend.routes.auth import logout_endpoint
+from backend.auth.routes import router as auth_router
+from backend.routes import user
+from backend.routes import pages
+
 from pathlib import Path
 
 app = FastAPI(

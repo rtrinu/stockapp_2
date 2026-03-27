@@ -1,242 +1,106 @@
-from fastapi import APIRouter, HTTPException, Depends, Response, Form, Request
-from fastapi.responses import RedirectResponse
-from sqlmodel import Session
-from backend.db.database import get_db
-from backend.models.models import User
-from backend.db.refresh_token import store_refresh_token
-from backend.core.settings import settings
-from backend.core.cryptography import encrypt, decrypt
-from backend.account.auth import signup
-from pwdlib import PasswordHash
-from uuid import uuid4
-from backend.core.hashing import hash_token, verify_token
-from backend.core.auth_handler import (
-    create_access_token,
-    create_refresh_token,
-    refresh_access_token,
-    decode_jwt,
-    is_token_not_expired,
-)
-import jwt
-from datetime import datetime, timedelta, timezone
-from backend.db.refresh_token import revoke_refresh_token
+# from fastapi import APIRouter, HTTPException, Depends, Response, Form, Request
+# from fastapi.responses import RedirectResponse
+# from sqlmodel import Session
+# from backend.db.database import get_db
+# from backend.models.models import User
+# from backend.core.settings import settings
+# from backend.core.cryptography import encrypt, decrypt
 
-hasher = PasswordHash.recommended()
+# from pwdlib import PasswordHash
+# from uuid import uuid4
+# from backend.core.hashing import hash_token, verify_token
 
-router = APIRouter()
+# import jwt
+# from datetime import datetime, timedelta, timezone
+# from backend.auth.db import revoke_refresh_token
+
+# hasher = PasswordHash.recommended()
+
+# router = APIRouter()
 
 
-@router.post("/sign-up", status_code=201)
-def signup_endpoint(
-    response: Response,
-    first_name: str = Form(...),
-    last_name: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
-    client_key: str = Form(...),
-    client_secret: str = Form(...),
-    db: Session = Depends(get_db),
-):
-    existing = db.query(User).filter(User.email == email).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="User already exists")
+# def get_or_refresh_access_token(request: Request, response: Response, db: Session):
+#     token = request.cookies.get("access_token")
+#     if token:
+#         try:
+#             payload = jwt.decode(
+#                 token,
+#                 settings.JWT_SECRET,
+#                 algorithms=[settings.JWT_ALGORITHM],
+#                 options={"verify_exp": False},
+#             )
+#             exp = payload.get("exp")
+#             if exp:
+#                 if datetime.fromtimestamp(exp, timezone.utc) > datetime.now(
+#                     timezone.utc
+#                 ):
+#                     return token
+#         except jwt.InvalidTokenError:
+#             pass
+#         except jwt.ExpiredSignatureError:
+#             pass
 
-    hashed_password = hasher.hash(password)
-    encrypted_api_key = encrypt(client_key)
-    encrypted_api_secret = encrypt(client_secret)
-    existing = (
-        db.query(User).filter(User.encrypted_api_key == encrypted_api_key).first()
-        or db.query(User)
-        .filter(User.encrypted_secret_key == encrypted_api_secret)
-        .first()
-    )
-    if existing:
-        raise HTTPException(status_code=400, detail="API Key/Secret already in use")
-    else:
-        new_user = signup(
-            db,
-            first_name,
-            last_name,
-            email,
-            hashed_password,
-            encrypted_api_key,
-            encrypted_api_secret,
-        )
-        access_token = create_access_token(str(new_user.id))
-        jti = str(uuid4())
-        refresh_token = create_refresh_token(str(new_user.id), jti)
-        response = RedirectResponse(url="/client/profile", status_code=303)
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            httponly=True,
-            secure=True,
-            samesite="strict",
-            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
-            path="/",
-        )
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=True,
-            samesite="strict",
-            max_age=settings.JWT_EXPIRATION_MINUTES,
-            path="/",
-        )
-        store_refresh_token(
-            db,
-            refresh_token,
-            new_user.id,
-            jti,
-            datetime.now(timezone.utc)
-            + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
-        )
+#     refresh_token = request.cookies.get("refresh_token")
 
-        return response
+#     if not refresh_token:
+#         return None
+
+#     valid_refresh_token = validate_or_revoke_refresh_token(request, db)
+#     if not valid_refresh_token:
+#         return None
+#     new_access = refresh_access_token(refresh_token)
+#     if not new_access:
+#         return None
+
+#     response.set_cookie(
+#         key="access_token",
+#         value=new_access,
+#         httponly=True,
+#         secure=True,
+#         samesite="strict",
+#         max_age=settings.JWT_EXPIRATION_MINUTES * 60,
+#         path="/",
+#     )
+#     return new_access
 
 
-@router.post("/login", status_code=201)
-def login_endpoint(
-    response: Response,
-    email: str = Form(...),
-    password: str = Form(...),
-    db: Session = Depends(get_db),
-):
-    existing = db.query(User).filter(User.email == email).first()
-    if not existing:
-        raise HTTPException(status_code=400, detail="User not found")
-    verify_password = hasher.verify(password, existing.hashed_password)
-    if verify_password:
-        access_token = create_access_token(str(existing.id))
-        jti = str(uuid4())
-        refresh_token = create_refresh_token(str(existing.id), jti)
-        response = RedirectResponse("/client/profile", status_code=303)
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            httponly=True,
-            secure=True,
-            samesite="strict",
-            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
-            path="/",
-        )
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=True,
-            samesite="strict",
-            max_age=settings.JWT_EXPIRATION_MINUTES * 60,
-            path="/",
-        )
-        store_refresh_token(
-            db,
-            refresh_token,
-            existing.id,
-            jti,
-            datetime.now(timezone.utc)
-            + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
-        )
-        return response
+# def get_current_user(
+#     request: Request, response: Response, db: Session = Depends(get_db)
+# ):
+#     token = get_or_refresh_access_token(request, response, db)
+#     if not token:
+#         raise HTTPException(status_code=401)
 
-    else:
-        raise HTTPException(status_code=401, detail="Invalid password")
+#     user_id = decode_jwt(token).get("sub")
+#     if not user_id:
+#         raise HTTPException(status_code=401)
+#     user = db.query(User).get(user_id)
+#     return user
 
 
-@router.get(
-    "/logout",
-    status_code=202,
-)
-def logout_endpoint(response: Response):
-    response = RedirectResponse("/home", status_code=303)
-    response.delete_cookie(key="access_token", path="/")
-    response.delete_cookie(key="refresh_token", path="/")
-    return response
+# @router.get("/delete-account")
+# def delete_account(
+#     response: Response,
+#     db: Session = Depends(get_db),
+#     user: User = Depends(get_current_user),
+# ):
+#     db.delete(user)
+#     db.commit()
+
+#     response.delete_cookie("access_token", path="/")
+#     response.delete_cookie("refresh_token", path="/")
+#     return {"message": "User deleted successfully"}
 
 
-def get_or_refresh_access_token(request: Request, response: Response, db: Session):
-    token = request.cookies.get("access_token")
-    if token:
-        try:
-            payload = jwt.decode(
-                token,
-                settings.JWT_SECRET,
-                algorithms=[settings.JWT_ALGORITHM],
-                options={"verify_exp": False},
-            )
-            exp = payload.get("exp")
-            if exp:
-                if datetime.fromtimestamp(exp, timezone.utc) > datetime.now(
-                    timezone.utc
-                ):
-                    return token
-        except jwt.InvalidTokenError:
-            pass
-        except jwt.ExpiredSignatureError:
-            pass
-
-    refresh_token = request.cookies.get("refresh_token")
-
-    if not refresh_token:
-        return None
-
-    valid_refresh_token = validate_or_revoke_refresh_token(request, db)
-    if not valid_refresh_token:
-        return None
-    new_access = refresh_access_token(refresh_token)
-    if not new_access:
-        return None
-
-    response.set_cookie(
-        key="access_token",
-        value=new_access,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-        max_age=settings.JWT_EXPIRATION_MINUTES * 60,
-        path="/",
-    )
-    return new_access
-
-
-def get_current_user(
-    request: Request, response: Response, db: Session = Depends(get_db)
-):
-    token = get_or_refresh_access_token(request, response, db)
-    if not token:
-        raise HTTPException(status_code=401)
-
-    user_id = decode_jwt(token).get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401)
-    user = db.query(User).get(user_id)
-    return user
-
-
-@router.get("/delete-account")
-def delete_account(
-    response: Response,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    db.delete(user)
-    db.commit()
-
-    response.delete_cookie("access_token", path="/")
-    response.delete_cookie("refresh_token", path="/")
-    return {"message": "User deleted successfully"}
-
-
-def validate_or_revoke_refresh_token(request: Request, db: Session = Depends(get_db)):
-    if not token:
-        raise HTTPException(status_code=401, detail="No refresh token found")
-    is_token_valid = is_token_not_expired(token)
-    user_id = decode_jwt(token).get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Malformed refresh token")
-    if is_token_valid:
-        return True
-    else:
-        result = revoke_refresh_token(db, user_id)
-        return False
+# def validate_or_revoke_refresh_token(request: Request, db: Session = Depends(get_db)):
+#     if not token:
+#         raise HTTPException(status_code=401, detail="No refresh token found")
+#     is_token_valid = is_token_not_expired(token)
+#     user_id = decode_jwt(token).get("sub")
+#     if not user_id:
+#         raise HTTPException(status_code=401, detail="Malformed refresh token")
+#     if is_token_valid:
+#         return True
+#     else:
+#         result = revoke_refresh_token(db, user_id)
+#         return False

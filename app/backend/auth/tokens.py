@@ -1,14 +1,14 @@
-from datetime import datetime, timedetla, timezone
+from datetime import datetime, timedelta, timezone
 from backend.core.settings import settings
-from models.models import User
+from backend.models.models import User
 from uuid import uuid4
 import jwt
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict
 
 
 def create_access_token(user_id: str) -> str:
-    expire = datetime.now(timezone.utc) + timedetla(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.JWT_EXPIRATION_MINUTES
     )
 
     payload = {"sub": user_id, "type": "access", "exp": expire}
@@ -37,8 +37,8 @@ def decode_jwt(token: str) -> Optional[Dict]:
     try:
         payload = jwt.decode(
             token,
-            JWT_SECRET,
-            algorithms=[JWT_ALGORITHM],
+            settings.JWT_SECRET,
+            algorithms=[settings.JWT_ALGORITHM],
             options={"require": ["sub", "exp"]},
         )
         return payload

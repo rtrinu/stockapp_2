@@ -1,13 +1,15 @@
 from backend.core.hashing import hash_token
 from backend.models.models import RefreshToken
+from sqlmodel import Session
+from backend.models.models import User
+from datetime import datetime, timezone, timedelta
+from uuid import UUID
 
 
-def store_refresh_token(db, token: str, user_id: str, jti: str, expires_at):
+def hash_and_store_refresh_token(db, token: str, user_id: str, jti: str, expires_at):
     hashed = hash_token(token)
     db.add(
-        RefreshToken(
-            id=jti, user_id=user_id, hashed_token=hashed, expires_at=expires_at
-        )
+        RefreshToken(id=jti, user_id=user_id, token_hash=hashed, expires_at=expires_at)
     )
     db.commit()
 
@@ -47,3 +49,17 @@ def create_user(
         raise HTTPException(
             status_code=500, detail=f"Unexpected error during signup: {str(e)}"
         )
+
+
+def revoke_refresh_token(
+    db: Session,
+    user_id: UUID,
+):
+    refresh_token = db.exec(
+        select(RefreshToken).where(RefreshToken.user_id == user_id)
+    ).first()
+    if not refresh_token:
+        return {"detail": "No refresh token associated with user found"}
+    refresh_token.revoked = True
+    db.commit()
+    return refresh_token

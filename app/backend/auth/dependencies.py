@@ -1,20 +1,20 @@
-from sqlmodel import Session, select
-from fastapi import Response, HTTPException
-from models.models import User, RefreshToken
-from auth.schema import SignupData, LoginRequest
-from auth.db import create_user, store_refresh_token
-from auth.tokens import (
+from sqlmodel import Session, select, or_
+from fastapi import Response, HTTPException, Depends, Request
+from backend.models.models import User, RefreshToken
+from backend.auth.schema import SignupData, LoginRequest
+from backend.auth.db import create_user, hash_and_store_refresh_token
+from backend.auth.tokens import (
     generate_tokens,
     create_access_token,
     create_refresh_token,
     decode_jwt,
 )
-from cryptography import encrypt
+from backend.core.cryptography import encrypt
 from pwdlib import PasswordHash
 from uuid import uuid4
 from datetime import datetime, timezone, timedelta
-from core.settings import settings
-from db.database import get_db
+from backend.core.settings import settings
+from backend.db.database import get_db
 
 hasher = PasswordHash.recommended()
 
@@ -43,7 +43,7 @@ def create_user_and_tokens(db: Session, data: SignupData):
     hashed_password = hasher.hash(data.password)
     new_user = create_user(
         db,
-        datta.first_name,
+        data.first_name,
         data.last_name,
         data.email,
         hashed_password,
@@ -53,8 +53,11 @@ def create_user_and_tokens(db: Session, data: SignupData):
 
     # Creates access and refresh token for user
     access_token, refresh_token, jti = generate_tokens(new_user)
+    expires_at = datetime.now(timezone.utc) + timedelta(
+        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+    )
 
-    store_refresh_token(db, refresh_token, new_user.id, jti, expires_at)
+    hash_and_store_refresh_token(db, refresh_token, new_user.id, jti, expires_at)
     return new_user, access_token, refresh_token
 
 
@@ -97,18 +100,17 @@ def refresh_tokens(
     new_access = create_access_token(user_id)
 
     # Refresh rotation
-    new_jti = str(uuid4)
-    new_refresh = create_refresh_token(user_id, jti)
+    new_jti = str(uuid4())
+    new_refresh = create_refresh_token(user_id, new_jti)
     token_record.revoked = True
     db.add(token_record)
     db.commit()
 
     statement = select(User).where(User.id == user_id)
-    user_record = db.exec(statement).first()
     expires_at = datetime.now(timezone.utc) + timedelta(
         days=settings.REFRESH_TOKEN_EXPIRE_DAYS
     )
-    store_refresh_token(db, new_refresh, user_id, new_jti, expires_at)
+    hash_and_store_refresh_token(db, new_refresh, user_id, new_jti, expires_at)
 
     # Set fresh refresh cookie
     response.set_cookie(
@@ -122,3 +124,15 @@ def refresh_tokens(
     )
 
     return new_access
+
+
+def get_current_user(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401)
+
+    user_id = decode_jwt(token).get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401)
+    user = db.query(User).get(user_id)
+    return user
