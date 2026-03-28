@@ -48,3 +48,9 @@ def get_position_from_db(db: Session, user_id: UUID, symbol: str) -> Position:
     )
     position = db.exec(statement).first()
     return position
+
+
+def get_all_positions(db: Session, user_id: UUID) -> List[Position]:
+    statement = select(Position).where(Position.user_id == user_id)
+    positions = db.exec(statement).all()
+    return positions

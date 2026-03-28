@@ -2,7 +2,7 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest, OrderRequest
 from alpaca.trading.requests import GetAssetsRequest
 from alpaca.trading.enums import OrderSide, OrderType, TimeInForce
-from backend.models.models import User, InternalOrderStatus
+from backend.models.models import User, InternalOrderStatus, Position
 from backend.core.cryptography import decrypt
 from sqlmodel import Session
 from backend.services.db import (
@@ -10,6 +10,8 @@ from backend.services.db import (
     list_orders_from_db,
     check_order_duplicate,
     get_orders,
+    get_all_positions,
+    get_position_from_db,
 )
 from typing import Optional, Sequence, List
 from backend.models.models import Order
@@ -99,11 +101,11 @@ class AlpacaService:
     def cancel_all_orders(self) -> List[object]:
         return self.client.cancel_orders()
 
-    def get_positions(self) -> Sequence[object]:
-        return self.client.get_all_positions()
+    def get_positions(self, db: Session) -> List[Positions]:
+        return get_all_positions(self.user.id, db)
 
-    def get_position(self, symbol: str) -> object:
-        return self.client.get_open_position(symbol)
+    def get_position(self, symbol: str, db: Session) -> Position:
+        return get_position_from_db(self.user.id, symbol, db)
 
     def close_position(self, symbol: str) -> object:
         return self.client.close_position(symbol)
