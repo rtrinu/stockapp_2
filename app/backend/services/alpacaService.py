@@ -9,6 +9,7 @@ from backend.services.db import (
     get_order_from_db,
     list_orders_from_db,
     check_order_duplicate,
+    get_orders,
 )
 from typing import Optional, Sequence, List
 from backend.models.models import Order
@@ -21,6 +22,7 @@ class AlpacaService:
             decrypt(user.encrypted_api_secret),
             paper=True,
         )
+        self.user = user
 
     def get_account_info(self) -> object:
         return self.client.get_account()
@@ -72,12 +74,20 @@ class AlpacaService:
         return self.client.submit_order(order_data)
 
     def get_order(self, order_id: str, db: Session) -> Order:
-        order = get_order_from_db(db, order_id)
+        order = get_order_from_db(db, order_id, self.user.id)
         if not order:
             raise ValueError("Order not Found")
         return order
 
-    def list_orders(self, status: InternalOrderStatus, db: Session) -> List[Order]:
+    def get_orders(self, db: Session) -> List[Order]:
+        orders = get_orders(self.user.id, db)
+        if not orders:
+            raise ValueError("Orders not Found")
+        return orders
+
+    def list_orders_by_status(
+        self, status: InternalOrderStatus, db: Session
+    ) -> List[Order]:
         orders = list_orders_from_db(db, status)
         if not orders:
             raise Value("Orders not Found")
