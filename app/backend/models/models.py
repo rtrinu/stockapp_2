@@ -32,6 +32,8 @@ class User(Base, table=True):
 
     orders: List["Order"] = Relationship(back_populates="user")
 
+    positions: List["Position"] = Relationship(back_populates="user")
+
 
 class RefreshToken(Base, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -75,3 +77,17 @@ class Order(Base, table=True):
     updated_at: datetime = Field(default_factory=datetime.now(timezone.utc))
 
     user: Optional["User"] = Relationship(back_populates="orders")
+
+
+class Position(Base, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
+
+    symbol: str = Field(index=True)
+    qty: float
+    avg_entry_price: float
+    market_value: Optional[float] = None
+    unrealised_pl: Optional[float] = None
+    updated_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+
+    user: Optional["User"] = Relationship(back_populates="positions")
