@@ -13,7 +13,7 @@ from backend.routes import pages
 from pathlib import Path
 
 app = FastAPI(
-    version="0.1.2",
+    version="0.1.3",
     docs_url="/docs",
     redoc_url="/redoc",
 )
