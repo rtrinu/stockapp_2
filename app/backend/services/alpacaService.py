@@ -1,93 +1,138 @@
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
+from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest, OrderRequest
 from alpaca.trading.requests import GetAssetsRequest
-from backend.models.models import User
+from alpaca.trading.enums import OrderSide, OrderType, TimeInForce
+from backend.models.models import User, InternalOrderStatus
 from backend.core.cryptography import decrypt
+from sqlmodel import Session
+from backend.services.db import (
+    get_order_from_db,
+    list_orders_from_db,
+    check_order_duplicate,
+)
+from typing import Optional, Sequence, List
+from backend.models.models import Order
 
 
 class AlpacaService:
-    def __init__(self, user):
+    def __init__(self, user) -> None:
         self.client = TradingClient(
             decrypt(user.encrypted_api_key),
             decrypt(user.encrypted_api_secret),
             paper=True,
         )
 
-    def get_account_info(self):
+    def get_account_info(self) -> object:
         return self.client.get_account()
 
-    def get_buying_power(self):
+    def get_buying_power(self) -> float:
         account = self.get_account_info()
         return account.buying_power
 
-    def is_trading_blocked(self):
+    def is_trading_blocked(self) -> bool:
         account = self.get_account_info()
         return account.trading_blocked
 
-    def place_market_order(self, symbol: str, qty: float, side, timeInForce=None):
-        market_order_data = MarketOrderRequest(
-            symbol=symbol, qty=qty, side=side, time_in_force=timeInForce
+    def place_market_order(
+        self, symbol: str, qty: float, side: OrderSide
+    ) -> MarketOrderRequest:
+        return MarketOrderRequest(
+            symbol=symbol,
+            qty=qty,
+            side=side,
+            time_in_force=TimeInForce.DAY,
+            order_type=OrderType.MARKET,
         )
-        market_order = self.client.submit_order(order_data=market_order_data)
-        return {"order": "submitted", "data": market_order_data}
 
     def place_limit_order(
-        self, symbol: str, qty: float, limit_price: float, side, timeInForce=None
-    ):
-        limit_order_data = LimitOrderRequest(
+        self, symbol: str, qty: float, limit_price: float, side: OrderSide
+    ) -> LimitOrderRequest:
+        return LimitOrderRequest(
             symbol=symbol,
             qty=qty,
             limit_price=limit_price,
             side=side,
-            time_in_force=timeInForce,
+            time_in_force=timeInForce.DAY,
+            order_type=OrderType.LIMIT,
         )
-        limit_order = self.client.submit_order(order_data=limit_order_data)
-        return {"order": "submitted", "data": limit_order_data}
 
-    def place_stop_order(self):
-        pass
+    def place_stop_order(
+        self, symbol: str, qty: float, side: OrderSide, stop_price: float
+    ) -> OrderRequest:
+        return OrderRequest(
+            symbol=symbol,
+            qty=qty,
+            side=side,
+            order_type=OrderType.STOP,
+            stop_price=stop_price,
+            time_in_force=TimeInForce.DAY,
+        )
 
-    def get_order(order_id):
-        pass
+    def submit_order(self, order_data) -> object:
+        return self.client.submit_order(order_data)
 
-    def list_orders(status):
-        pass
+    def get_order(self, order_id: str, db: Session) -> Order:
+        order = get_order_from_db(db, order_id)
+        if not order:
+            raise ValueError("Order not Found")
+        return order
 
-    def cancel_order(order_id):
-        pass
+    def list_orders(self, status: InternalOrderStatus, db: Session) -> List[Order]:
+        orders = list_orders_from_db(db, status)
+        if not orders:
+            raise Value("Orders not Found")
+        return orders
 
-    def cancel_all_orders():
-        pass
+    def cancel_order(self, order_id: str) -> object:
+        return self.client.cancel_order_by_id(order_id)
 
-    def get_positions():
-        pass
+    def cancel_all_orders(self) -> List[object]:
+        return self.client.cancel_orders()
 
-    def get_position(symbol: str):
-        pass
+    def get_positions(self) -> Sequence[object]:
+        return self.client.get_all_positions()
 
-    def close_position(symbol: str):
-        pass
+    def get_position(self, symbol: str) -> object:
+        return self.client.get_open_position(symbol)
 
-    def close_all_positions():
-        pass
+    def close_position(self, symbol: str) -> object:
+        return self.client.close_position(symbol)
 
-    def get_portfolio_value():
-        pass
+    def close_all_positions(self) -> Sequence[object]:
+        return self.client.close_all_positions()
 
-    def get_portfolio_history():
-        pass
+    def get_portfolio_value(self) -> float:
+        account = self.get_account_info()
+        return account.portfolio_value
 
-    def is_tradable(symbol: str):
-        pass
+    def get_portfolio_history(self) -> object:
+        return self.client.get_portfolio_history()
 
-    def get_asset(symbol: str):
-        pass
+    def is_tradable(self, symbol: str) -> bool:
+        asset = self.client.get_asset(symbol)
+        return asset.tradable
 
-    def validate_order(symbol: str, qty: int):
-        pass
+    def get_asset(self, symbol: str) -> object:
+        return self.client.get_asset(symbol)
+
+    def validate_order(self, symbol: str, qty: int) -> bool:
+        if qty <= 0:
+            return False, "Quantity must be greater than zero."
+        try:
+            asset = self.get_asset(symbol)
+        except Exception:
+            return False, f"Symbol {symbol} not found"
+        if not self.is_tradable(symbol):
+            return False, f"{symbol} is not tradable on Alpaca"
+        try:
+            buying_power = self.get_buying_power()
+        except Exception:
+            buying_power = 0
+
+        return True, ""
 
     def check_risk_limits():
         pass
 
-    def prevent_duplicate_orders(order_id):
-        pass
+    def prevent_duplicate_orders(order_id: str) -> bool:
+        return check_order_duplicate(order_id)
