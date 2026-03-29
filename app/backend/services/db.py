@@ -2,6 +2,7 @@ from sqlmodel import select, Session
 from backend.models.models import Order, InternalOrderStatus, Position
 from backend.services.dependencies import map_raw_to_internal_status
 from uuid import UUID
+from typing import Dict
 from datetime import datetime, timezone
 
 
@@ -32,6 +33,23 @@ def store_order(db: Session, user_id: UUID, alpaca_order):
     db.add(order)
     db.commit()
     db.refresh(order)
+
+    return order
+
+
+def update_order_in_db(db: Session, order_id: str, changes: Dict[str:object]) -> Order:
+    statement = select(Order).where(Order.alpaca_order_id == order_id)
+    order = db.exec(statement).first()
+
+    if not order:
+        raise ValueError("Order not found")
+
+    for field, value in changes.items():
+        setattr(order, field, value)
+
+    db.add(order)
+    db.commit()
+    db.refresh(existing)
 
     return order
 
