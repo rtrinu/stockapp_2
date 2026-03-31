@@ -132,8 +132,18 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     if not token:
         raise HTTPException(status_code=401)
 
-    user_id = decode_jwt(token).get("sub")
+    try:
+        payload = decode_jwt(token)
+        user_id = payload.get("sub")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
     if not user_id:
-        raise HTTPException(status_code=401)
-    user = db.query(User).get(user_id)
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    user = db.get(User, uuid.UUID(user_id))
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     return user
