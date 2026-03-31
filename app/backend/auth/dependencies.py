@@ -15,7 +15,7 @@ from uuid import uuid4
 from datetime import datetime, timezone, timedelta
 from backend.core.settings import settings
 from backend.db.database import get_db
-from backend.services.tradingClient import get_alpaca_client
+
 
 hasher = PasswordHash.recommended()
 
