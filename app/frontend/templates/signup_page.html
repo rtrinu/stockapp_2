@@ -1,107 +1,88 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Create Account — Sign Up</title>
-    <meta name="description" content="Create a new account" />
-    <link rel="stylesheet" href="/static/styles.css" />
-  </head>
-  <body>
-    <!-- ====== Navbar ====== -->
-    <nav class="navbar" role="navigation" aria-label="Main navigation">
-      <a href="/" class="navbar-brand">Acme</a>
-      <ul class="navbar-links">
-        <li><a href="/home">Home</a></li>
-        <li><a href="/login-page">Log In</a></li>
-        <li><a href="/signup-page">Sign Up</a></li>
-      </ul>
-    </nav>
+{% extends "base_template.html" %} {% block content %}
 
-    <!-- ====== Hero / Login Card ====== -->
-    <main class="hero">
-      <div class="login-card">
-        <div class="login-card-header">
-          <h1>Create an account</h1>
-          <p>Enter your details to get started</p>
+<!-- ====== Hero / Login Card ====== -->
+<main class="hero">
+  <div class="login-card">
+    <div class="login-card-header">
+      <h1>Create an account</h1>
+      <p>Enter your details to get started</p>
+    </div>
+
+    <!-- Signup form — posts directly to FastAPI -->
+    <form action="/api/v1/sign-up" method="POST" class="login-form">
+      <div class="form-group">
+        <div class="form-group">
+          <label for="first_name">First Name</label>
+          <input
+            type="text"
+            id="first_name"
+            name="first_name"
+            placeholder="Zain"
+            required
+          />
         </div>
-
-        <!-- Signup form — posts directly to FastAPI -->
-        <form action="/api/v1/sign-up" method="POST" class="login-form">
-          <div class="form-group">
-            <div class="form-group">
-              <label for="first_name">First Name</label>
-              <input
-                type="text"
-                id="first_name"
-                name="first_name"
-                placeholder="Zain"
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label for="last_name">Last Name</label>
-              <input
-                type="text"
-                id="last_name"
-                name="last_name"
-                placeholder="Ahmed"
-                required
-              />
-            </div>
-            <label for="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              placeholder="you@example.com"
-              autocomplete="email"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              placeholder="Create a password"
-              autocomplete="new-password"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="client_key">Client Key</label>
-            <input
-              type="text"
-              id="client_key"
-              name="client_key"
-              placeholder="Your client key"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="client_secret">Client Secret</label>
-            <input
-              type="password"
-              id="client_secret"
-              name="client_secret"
-              placeholder="Your client secret"
-              required
-            />
-          </div>
-          <button type="submit" class="btn-primary">Sign Up</button>
-        </form>
+        <div class="form-group">
+          <label for="last_name">Last Name</label>
+          <input
+            type="text"
+            id="last_name"
+            name="last_name"
+            placeholder="Ahmed"
+            required
+          />
+        </div>
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+          required
+        />
       </div>
-    </main>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Create a password"
+          autocomplete="new-password"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label for="client_key">Client Key</label>
+        <input
+          type="text"
+          id="client_key"
+          name="client_key"
+          placeholder="Your client key"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label for="client_secret">Client Secret</label>
+        <input
+          type="password"
+          id="client_secret"
+          name="client_secret"
+          placeholder="Your client secret"
+          required
+        />
+      </div>
+      <button type="submit" class="btn-primary">Sign Up</button>
+    </form>
+  </div>
+</main>
 
-    <!-- ====== Footer ====== -->
-    <footer class="footer">
-      <p>
-        Already have an account?
-        <a href="#">Sign in</a> &middot; <a href="#">Privacy</a> &middot;
-        <a href="#">Terms</a>
-      </p>
-    </footer>
-  </body>
-</html>
+<!-- ====== Footer ====== -->
+<footer class="footer">
+  <p>
+    Already have an account?
+    <a href="#">Sign in</a> &middot; <a href="#">Privacy</a> &middot;
+    <a href="#">Terms</a>
+  </p>
+</footer>
+{% endblock content %}
