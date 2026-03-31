@@ -1,4 +1,8 @@
 from backend.models.models import InternalOrderStatus
+from backend.models.models import User
+from backend.auth.dependencies import get_current_user
+from backend.services.alpacaService import AlpacaService
+from fastapi import Depends
 
 
 def map_raw_to_internal_status(raw_status: str) -> InternalOrderStatus:
@@ -30,3 +34,7 @@ def map_raw_to_internal_status(raw_status: str) -> InternalOrderStatus:
 
     # anything else you treat as ‘pending’
     return InternalOrderStatus.PENDING
+
+
+def get_alpaca_service(user: User = Depends(get_current_user)) -> AlpacaService:
+    return AlpacaService(user)
