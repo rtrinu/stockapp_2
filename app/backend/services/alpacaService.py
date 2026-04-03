@@ -34,6 +34,14 @@ class AlpacaService:
         account = self.get_account_info()
         return account.buying_power
 
+    def get_equity(self):
+        account = self.get_account_info()
+        return account.equity
+
+    def get_cash(self):
+        account = self.get_account_info()
+        return account.cash
+
     def is_trading_blocked(self) -> bool:
         account = self.get_account_info()
         return account.trading_blocked

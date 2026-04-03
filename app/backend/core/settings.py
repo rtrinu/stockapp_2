@@ -9,9 +9,6 @@ load_dotenv()
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
-    ALPACA_KEY: str
-    ALPACA_SECRET: str
-    ALPACA_BASE_URL: str
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
