@@ -54,27 +54,36 @@ class InternalOrderStatus(str, Enum):
     FAILED = "failed"
 
 
-class Order(Base, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
-    alpaca_order_id: Optional[str] = Field(default=None, index=True)
+class OrderType(str, Enum):
+    MARKET = "market"
+    LIMIT = "limit"
+    STOP = "stop"
+    STOP_LIMIT = "stop_limit"
 
-    symbol: str = Field(index=True)
+
+class OrderSide(str, Enum):
+    BUY = "buy"
+    SELL = "sell"
+
+
+class Order(Base, table=True):
+    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
+
+    symbol: str
     qty: float
     side: OrderSide
     order_type: OrderType
 
-    limit_price: Optional[float] = None
-    stop_price: Optional[float] = None
+    status: InternalOrderStatus = Field(default=InternalOrderStatus.PENDING)
 
-    status: OrderStatus = Field(default=InternalOrderStatus.PENDING)
+    details: Optional[dict] = Field(default=None, sa_column_kwargs={"type_": "JSONB"})
 
+    alpaca_order_id: Optional[str] = Field(default=None, index=True)
+    client_order_id: Optional[str] = Field(default=None, index=True)
     alpaca_status: Optional[str] = None
 
-    client_order_id: Optional[str] = Field(default=None, index=True)
-
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     user: Optional["User"] = Relationship(back_populates="orders")
 
