@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from backend.services.tradingClient import get_alpaca_client
 from backend.services.dependencies import get_alpaca_service
 from backend.db.database import get_db
-from backend.services.alpacaService import AlpacaService=Depends(get_alpaca_client)
+from backend.services.alpacaService import AlpacaService
 from backend.models.models import InternalOrderStatus
 from sqlModel import Session
 
@@ -11,30 +11,30 @@ router = APIRouter(tags=["service"])
 
 
 @router.get("/account")
-def get_user_account(service: AlpacaService=Depends(get_alpaca_client) = Depends(get_alpaca_service)):
+def get_user_account(service: AlpacaService = Depends(get_alpaca_client)):
     return service.get_account_info()
 
 
 @router.get("/portfolio/value")
-def get_user_portfolio(service: AlpacaService=Depends(get_alpaca_client)=Depends()):
+def get_user_portfolio(service: AlpacaService = Depends(get_alpaca_client)):
     # wraps get_portfolio
     return service.get_portfolio_value()
 
 
 @router.get("/portfolio/history")
-def get_user_portfolio_value(service: AlpacaService=Depends(get_alpaca_client)):
+def get_user_portfolio_value(service: AlpacaService = Depends(get_alpaca_client)):
     # wraps get_portfolio_history
     return service.get_portfolio_history()
 
 
 @router.get("/account/buying-power")
-def get_user_buying_power(service: AlpacaService=Depends(get_alpaca_client)):
+def get_user_buying_power(service: AlpacaService = Depends(get_alpaca_client)):
     # wraps get_buying_power
     return service.get_buying_power()
 
 
 @router.get("/account/status")
-def get_user_account_status(service: AlpacaService=Depends(get_alpaca_client)):
+def get_user_account_status(service: AlpacaService = Depends(get_alpaca_client)):
     # include trading_blocked, buying_power, portfolio_value
     return {
         "trading blocked": service.is_trading_blocked,
@@ -48,20 +48,28 @@ def get_user_account_status(service: AlpacaService=Depends(get_alpaca_client)):
 
 @router.get("/orders")
 # wraps get_orders
-def get_user_orders(service: AlpacaService=Depends(get_alpaca_client), db: Session = Depends(get_db)):
+def get_user_orders(
+    service: AlpacaService = Depends(get_alpaca_client), db: Session = Depends(get_db)
+):
     return service.get_orders(db)
 
 
 @router.get("/orders/{id}")
 # wraps get_order
-def get_user_order_by_id(service: AlpacaService=Depends(get_alpaca_client), id: str, db: Session = Depends(get_db)):
+def get_user_order_by_id(
+    id: str,
+    service: AlpacaService = Depends(get_alpaca_client),
+    db: Session = Depends(get_db),
+):
     return service.get_order(id, db)
 
 
 @router.get("/orders?status={status}")
 # wraps list_orders_by_status
 def list_user_orders_by_status(
-    service: AlpacaService=Depends(get_alpaca_client), status: InternalOrderStatus, db: Session = Depends(get_db)
+    status: InternalOrderStatus,
+    service: AlpacaService = Depends(get_alpaca_client),
+    db: Session = Depends(get_db),
 ):
     return service.list_orders_by_status(status, db)
 
@@ -75,14 +83,18 @@ def list_user_orders_by_status(
 
 @router.get("/positions")
 # wraps get_positions
-def get_user_positions(service: AlpacaService=Depends(get_alpaca_client), db: Session = Depends(get_db)):
+def get_user_positions(
+    service: AlpacaService = Depends(get_alpaca_client), db: Session = Depends(get_db)
+):
     return service.get_positions(db)
 
 
 @router.get("/positions/{symbol}")
 # wraps get_position
 def get_user_position(
-    service: AlpacaService=Depends(get_alpaca_client), symbol: str, db: Session = Depends(get_db)
+    symbol: str,
+    service: AlpacaService = Depends(get_alpaca_client),
+    db: Session = Depends(get_db),
 ):
     return service.get_position(symbol, db)
 
@@ -97,11 +109,11 @@ def get_user_position(
 
 @router.get("/assets/{symbol}")
 # wraps get_asset
-def get_user_asset(service: AlpacaService=Depends(get_alpaca_client), symbol: str):
+def get_user_asset(symbol: str, service: AlpacaService = Depends(get_alpaca_client)):
     return service.get_asset(symbol)
 
 
 @router.get("/assets/{symbol}/tradable")
 # wraps is_tradable
-def is_tradable(service: AlpacaService=Depends(get_alpaca_client), symbol: str):
+def is_tradable(symbol: str, service: AlpacaService = Depends(get_alpaca_client)):
     return service.is_tradable(symbol)
