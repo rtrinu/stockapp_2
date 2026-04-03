@@ -1,40 +1,58 @@
 from sqlmodel import select, Session
 from backend.models.models import Order, InternalOrderStatus, Position
 from backend.services.dependencies import map_raw_to_internal_status
+from backend.services.schema import OrderCreate
 from uuid import UUID
 from typing import Dict
 from datetime import datetime, timezone
 
 
-def store_order(db: Session, user_id: UUID, alpaca_order):
-    existing = check_order_duplicate(db, alpaca_order.id)
-    if existing:
-        order = existing
-    else:
-        order = Order(
-            user_id=user_id,
-            alpaca_order_id=alpaca_order.id,
-            created_at=datetime.now(timezone.utc),
-        )
-    order.symbol = alpaca_order.symbol
-    order.qty = float(alpaca_order.qty)
-    order.side = alpaca_order.side
-    order.order_type = alpaca_order.order_type
-    order.limit_price = getattr(alpaca_order, "limit_price", None)
-    order.stop_price = getattr(alpaca_order, "stop_price", None)
-
-    order.alpaca_status = alpaca_order.status
-    order.status = map_raw_to_internal_status(alpaca_order.status)
-
-    order.client_order_id = alpaca_order.client_order_id
-
-    order.updated_at = datetime.now(timezone.utc)
-
+def store_order(db: Session, order_in: OrderCreate, user_id: uuid.UUID):
+    order = Order(
+        user_id=user_id,
+        symbol=order_in.symbol,
+        qty=order_in.qty,
+        side=order_in.side,
+        order_type=order_in.order_type,
+        details=order_in.details,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
     db.add(order)
     db.commit()
     db.refresh(order)
-
     return order
+
+
+# def store_order(db: Session, user_id: UUID, alpaca_order):
+#     existing = check_order_duplicate(db, alpaca_order.id)
+#     if existing:
+#         order = existing
+#     else:
+#         order = Order(
+#             user_id=user_id,
+#             alpaca_order_id=alpaca_order.id,
+#             created_at=datetime.now(timezone.utc),
+#         )
+#     order.symbol = alpaca_order.symbol
+#     order.qty = float(alpaca_order.qty)
+#     order.side = alpaca_order.side
+#     order.order_type = alpaca_order.order_type
+#     order.limit_price = getattr(alpaca_order, "limit_price", None)
+#     order.stop_price = getattr(alpaca_order, "stop_price", None)
+
+#     order.alpaca_status = alpaca_order.status
+#     order.status = map_raw_to_internal_status(alpaca_order.status)
+
+#     order.client_order_id = alpaca_order.client_order_id
+
+#     order.updated_at = datetime.now(timezone.utc)
+
+#     db.add(order)
+#     db.commit()
+#     db.refresh(order)
+
+#     return order
 
 
 def update_order_in_db(db: Session, order_id: str, changes: Dict[str:object]) -> Order:
