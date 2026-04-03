@@ -1,0 +1,56 @@
+{% extends "base_template.html" %} {% block content %}
+<div class="dashboard">
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <h2>Portfolio Value</h2>
+      <p>${{ portfolio_value }}</p>
+    </div>
+    <div class="stat-card">
+      <h2>Equity</h2>
+      <p>${{ equity }}</p>
+    </div>
+    <div class="stat-card">
+      <h2>Buying Power</h2>
+      <p>${{ buying_power }}</p>
+    </div>
+    <div class="stat-card">
+      <h2>Cash</h2>
+      <p>${{ cash }}</p>
+    </div>
+  </div>
+
+  <!-- Positions Table -->
+  <h2>Open Positions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Symbol</th>
+        <th>Qty</th>
+        <th>Avg Price</th>
+        <th>Current Price</th>
+        <th>Market Value</th>
+        <th>P/L</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for position in positions %}
+      <tr>
+        <td>{{ position.symbol }}</td>
+        <td>{{ position.qty }}</td>
+        <td>${{ position.avg_price }}</td>
+        <td>${{ position.current_price }}</td>
+        <td>${{ position.market_value }}</td>
+        <td class="{{ 'green' if position.pl >= 0 else 'red' }}">
+          ${{ position.pl }}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" style="text-align: center">No positions available</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock content %}

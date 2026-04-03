@@ -29,7 +29,7 @@ def signup_endpoint(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    response = RedirectResponse(url="/client/profile", status_code=303)
+    response = RedirectResponse(url="/api/v1/dashboard", status_code=303)
 
     response.set_cookie(
         key="access_token",
@@ -69,7 +69,7 @@ def login_endpoint(
     )
     hash_and_store_refresh_token(db, refresh_token, user.id, jti, expires_at)
 
-    response = RedirectResponse(url="/client/profile", status_code=303)
+    response = RedirectResponse(url="/api/v1/dashboard", status_code=303)
     response.set_cookie(
         "access_token",
         access_token,

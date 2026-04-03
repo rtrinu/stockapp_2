@@ -12,6 +12,7 @@ from backend.auth.tokens import (
 from backend.core.cryptography import encrypt
 from pwdlib import PasswordHash
 from uuid import uuid4
+import uuid
 from datetime import datetime, timezone, timedelta
 from backend.core.settings import settings
 from backend.db.database import get_db
