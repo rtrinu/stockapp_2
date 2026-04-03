@@ -1,6 +1,9 @@
 from cryptography.fernet import Fernet, InvalidToken
+from backend.core.settings import settings
 
-key = Fernet.generate_key()
+key = settings.FERNET_KEY
+if isinstance(key, str):
+    key = key.encode("utf-8")
 f = Fernet(key)
 
 
