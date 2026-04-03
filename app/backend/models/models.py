@@ -24,7 +24,7 @@ class User(Base, table=True):
     # is_active: bool = Field(default=True)
     encrypted_api_key: Optional[str] = None
     encrypted_secret_key: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     refresh_tokens: List["RefreshToken"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
@@ -54,33 +54,41 @@ class InternalOrderStatus(str, Enum):
     FAILED = "failed"
 
 
-class Order(Base, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
-    alpaca_order_id: Optional[str] = Field(default=None, index=True)
-
-    symbol: str = Field(index=True)
+class OrderBase(Base):
+    symbol: str
     qty: float
-    side: OrderSide
-    order_type: OrderType
+
+    type: str
+    side: str
+    time_in_force: str
 
     limit_price: Optional[float] = None
     stop_price: Optional[float] = None
 
+    filled_qty: float = 0
+    filled_avg_price: Optional[float] = None
+
     status: OrderStatus = Field(default=InternalOrderStatus.PENDING)
 
-    alpaca_status: Optional[str] = None
+    submitted_at: Optional[datetime] = None
+    filled_at: Optional[datetime] = None
+    canceled_at: Optional[datetime] = None
 
-    client_order_id: Optional[str] = Field(default=None, index=True)
 
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+class Order(OrderBase, table=True):
+    user_id: uuid.UUID = Field(foreign_key="user.id")
 
-    user: Optional["User"] = Relationship(back_populates="orders")
+    alpaca_order_id: str = Field(index=True, unique=True)
+    client_order_id: Optional[str] = None
+
+    extended_hours: bool = False
+
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    user: User = Relationship(back_populates="orders")
 
 
 class Position(Base, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
 
     symbol: str = Field(index=True)
@@ -88,6 +96,6 @@ class Position(Base, table=True):
     avg_entry_price: float
     market_value: Optional[float] = None
     unrealised_pl: Optional[float] = None
-    updated_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     user: Optional["User"] = Relationship(back_populates="positions")
