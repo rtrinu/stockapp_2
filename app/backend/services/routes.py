@@ -1,14 +1,25 @@
 from fastapi import APIRouter, Depends, Request
 from backend.services.dependencies import get_alpaca_service
 from backend.db.database import get_db
+from backend.auth.dependencies import get_current_user
 from backend.services.alpacaService import AlpacaService
-from backend.models.models import InternalOrderStatus
+from backend.models.models import InternalOrderStatus, User
 from backend.services.schema import OrderCreate, OrderRead
 from backend.services.db import store_order
 from sqlmodel import Session
+from fastapi.templating import Jinja2Templates
 
 
 router = APIRouter(tags=["service"])
+templates = Jinja2Templates(directory="frontend/templates")
+
+
+@router.get("/dashboard")
+def dashboard_endpoint(request: Request, user: User = Depends(get_current_user)):
+    service = AlpacaService(user)
+    return templates.TemplateResponse(
+        "dashboard.html", {"request": request, "service": service}
+    )
 
 
 @router.get("/account")

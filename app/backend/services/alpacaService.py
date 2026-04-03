@@ -22,7 +22,7 @@ class AlpacaService:
     def __init__(self, user) -> None:
         self.client = TradingClient(
             decrypt(user.encrypted_api_key),
-            decrypt(user.encrypted_api_secret),
+            decrypt(user.encrypted_secret_key),
             paper=True,
         )
         self.user = user
