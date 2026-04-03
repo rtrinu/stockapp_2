@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api"
     ALLOWED_ORIGINS: str = ""
     DEBUG: bool = True
+    FERNET_KEY: str
     JWT_SECRET: str
     JWT_ALGORITHM: str
     JWT_EXPIRATION_MINUTES: int
