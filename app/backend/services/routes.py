@@ -5,7 +5,7 @@ from backend.services.alpacaService import AlpacaService
 from backend.models.models import InternalOrderStatus
 from backend.services.schema import OrderCreate, OrderRead
 from backend.services.db import store_order
-from sqlModel import Session
+from sqlmodel import Session
 
 
 router = APIRouter(tags=["service"])

@@ -1,8 +1,9 @@
 from sqlmodel import Field, SQLModel, Column, DateTime, func, Relationship
+from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime, timezone
 from alpaca.trading.enums import OrderSide, OrderType, OrderStatus
 import uuid
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime, timezone
 from enum import Enum
 
@@ -76,7 +77,7 @@ class Order(Base, table=True):
 
     status: InternalOrderStatus = Field(default=InternalOrderStatus.PENDING)
 
-    details: Optional[dict] = Field(default=None, sa_column_kwargs={"type_": "JSONB"})
+    details: Optional[dict] = Field(default=None, sa_column=Column(JSONB))
 
     alpaca_order_id: Optional[str] = Field(default=None, index=True)
     client_order_id: Optional[str] = Field(default=None, index=True)

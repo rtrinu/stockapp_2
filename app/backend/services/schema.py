@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional, Literal, Dict, Any
 from enum import Enum
 from datetime import datetime, timezone
@@ -32,7 +32,7 @@ class OrderCreate(BaseModel):
     order_type: OrderType
     details: Optional[Dict[str, Any]] = None
 
-    @root_validator
+    @model_validator(mode="before")
     def validate_details(cls, values):
         order_type = values.get("order_type")
         details = values.get("details") or {}
@@ -68,4 +68,4 @@ class OrderRead(BaseModel):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True

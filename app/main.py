@@ -7,6 +7,7 @@ from backend.db.database import engine
 from backend.models.models import User
 from backend.db.database import init_db
 from backend.auth.routes import router as auth_router
+from backend.services.routes import router as service_router
 from backend.routes import user
 from backend.routes import pages
 
@@ -33,6 +34,7 @@ app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 app.include_router(pages.router)
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(service_router, prefix="/api/v1")
 app.include_router(user.router, prefix="/client")
 
 
