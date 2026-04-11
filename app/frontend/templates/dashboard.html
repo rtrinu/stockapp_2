@@ -1,67 +1,73 @@
 {% extends "base_template.html" %} {% block content %}
-<section class="dashboard container">
-  <!-- Stats Summary -->
-  <div class="stats-grid">
-    <div class="stat-card stat-card--primary">
-      <h2 class="stat-card__title">Portfolio Value</h2>
-      <p class="stat-card__value">${{ service.get_portfolio_value() }}</p>
+<section class="dashboard-center">
+  <div class="dashboard-card">
+    <!-- Header -->
+    <div class="dashboard-header">
+      <h1>Portfolio Overview</h1>
+      <p>Live account snapshot</p>
     </div>
 
-    <div class="stat-card stat-card--secondary">
-      <h2 class="stat-card__title">Equity</h2>
-      <p class="stat-card__value">${{ service.get_equity() }}</p>
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">Portfolio Value</span>
+        <span class="stat-value">${{ service.get_portfolio_value() }}</span>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-label">Equity</span>
+        <span class="stat-value">${{ service.get_equity() }}</span>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-label">Buying Power</span>
+        <span class="stat-value">${{ service.get_buying_power() }}</span>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-label">Cash</span>
+        <span class="stat-value">${{ service.get_cash() }}</span>
+      </div>
     </div>
 
-    <div class="stat-card stat-card--tertiary">
-      <h2 class="stat-card__title">Buying Power</h2>
-      <p class="stat-card__value">${{ service.get_buying_power() }}</p>
-    </div>
+    <!-- Positions -->
+    <div class="positions-section">
+      <h2>Open Positions</h2>
 
-    <div class="stat-card stat-card--accent">
-      <h2 class="stat-card__title">Cash</h2>
-      <p class="stat-card__value">${{ service.get_cash() }}</p>
+      <div class="table-wrapper">
+        <table class="positions-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Qty</th>
+              <th>Avg</th>
+              <th>Price</th>
+              <th>Value</th>
+              <th>P/L</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for position in positions %}
+            <tr>
+              <td class="symbol">{{ position.symbol }}</td>
+              <td>{{ position.qty }}</td>
+              <td>${{ position.avg_price }}</td>
+              <td>${{ position.current_price }}</td>
+              <td>${{ position.market_value }}</td>
+              <td class="{{ 'profit' if position.pl >= 0 else 'loss' }}">
+                ${{ position.pl }}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="empty">No positions yet</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
-
-  <!-- Open Positions Table -->
-  <section class="positions-section">
-    <h2 class="positions-section__header">Open Positions</h2>
-
-    <table class="positions-table">
-      <thead>
-        <tr>
-          <th>Symbol</th>
-          <th>Qty</th>
-          <th>Avg Price</th>
-          <th>Current Price</th>
-          <th>Market Value</th>
-          <th>P/L</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for position in positions %}
-        <tr class="positions-table__row">
-          <td class="positions-table__cell">{{ position.symbol }}</td>
-          <td class="positions-table__cell">{{ position.qty }}</td>
-          <td class="positions-table__cell">${{ position.avg_price }}</td>
-          <td class="positions-table__cell">${{ position.current_price }}</td>
-          <td class="positions-table__cell">${{ position.market_value }}</td>
-          <td
-            class="positions-table__cell 
-                     {{ 'text-success' if position.pl >= 0 else 'text-danger' }}"
-          >
-            ${{ position.pl }}
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="6" class="positions-table__empty">
-            No positions available
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
 </section>
 {% endblock content %}

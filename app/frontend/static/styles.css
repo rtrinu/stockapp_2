@@ -261,3 +261,122 @@ body {
     padding: 20px;
   }
 }
+
+/* ===== CENTERED DASHBOARD ===== */
+
+.dashboard-center {
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+/* Main container card */
+.dashboard-card {
+  width: 100%;
+  max-width: 1000px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Header */
+.dashboard-header {
+  margin-bottom: 24px;
+}
+
+.dashboard-header h1 {
+  font-size: 1.6rem;
+  margin-bottom: 4px;
+}
+
+.dashboard-header p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Stats grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+/* Individual stat cards */
+.stat-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  padding: 16px;
+  border-radius: calc(var(--radius) - 2px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+/* Positions */
+.positions-section h2 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+}
+
+/* Table wrapper */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+/* Table */
+.positions-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.positions-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  padding: 10px;
+  background: var(--bg-primary);
+}
+
+.positions-table td {
+  padding: 10px;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.85rem;
+}
+
+.positions-table tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Symbol */
+.symbol {
+  font-weight: 600;
+}
+
+/* Profit / Loss */
+.profit {
+  color: #22c55e;
+}
+
+.loss {
+  color: var(--danger);
+}
+
+/* Empty */
+.empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+}
