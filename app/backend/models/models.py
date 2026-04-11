@@ -1,11 +1,8 @@
-from sqlmodel import Field, SQLModel, Column, DateTime, func, Relationship
+from sqlmodel import Field, SQLModel, Column, Relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime, timezone
-from alpaca.trading.enums import OrderSide, OrderType, OrderStatus
 import uuid
 from typing import Optional, List, Dict
-from datetime import datetime, timezone
-from enum import Enum
 
 
 class Base(SQLModel):
@@ -22,17 +19,17 @@ class User(Base, table=True):
     first_name: str = Field(nullable=False)
     last_name: str = Field(nullable=False)
     hashed_password: str = Field(nullable=False)
-    # is_active: bool = Field(default=True)
+
     encrypted_api_key: Optional[str] = None
     encrypted_secret_key: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     refresh_tokens: List["RefreshToken"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
 
     orders: List["Order"] = Relationship(back_populates="user")
-
     positions: List["Position"] = Relationship(back_populates="user")
 
 
@@ -47,7 +44,7 @@ class RefreshToken(Base, table=True):
     user: User = Relationship(back_populates="refresh_tokens")
 
 
-class InternalOrderStatus(str, Enum):
+class InternalOrderStatus(str):
     PENDING = "pending"
     PARTIALLY_FILLED = "partially_filled"
     FILLED = "filled"
@@ -55,14 +52,14 @@ class InternalOrderStatus(str, Enum):
     FAILED = "failed"
 
 
-class OrderType(str, Enum):
+class OrderType(str):
     MARKET = "market"
     LIMIT = "limit"
     STOP = "stop"
     STOP_LIMIT = "stop_limit"
 
 
-class OrderSide(str, Enum):
+class OrderSide(str):
     BUY = "buy"
     SELL = "sell"
 
@@ -72,10 +69,11 @@ class Order(Base, table=True):
 
     symbol: str
     qty: float
-    side: OrderSide
-    order_type: OrderType
 
-    status: InternalOrderStatus = Field(default=InternalOrderStatus.PENDING)
+    side: str
+    order_type: str
+
+    status: str = Field(default=InternalOrderStatus.PENDING)
 
     details: Optional[dict] = Field(default=None, sa_column=Column(JSONB))
 
@@ -96,8 +94,10 @@ class Position(Base, table=True):
     symbol: str = Field(index=True)
     qty: float
     avg_entry_price: float
+
     market_value: Optional[float] = None
     unrealised_pl: Optional[float] = None
-    updated_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     user: Optional["User"] = Relationship(back_populates="positions")

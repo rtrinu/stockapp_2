@@ -380,3 +380,54 @@ body {
   padding: 20px;
   color: var(--text-muted);
 }
+
+/* ===== ORDER FORMS ===== */
+
+.order-container {
+  max-width: 520px;
+  margin: 40px auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.order-title {
+  font-size: 1.25rem;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.order-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-form input,
+.order-form select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.order-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.order-actions a {
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.order-actions a:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}

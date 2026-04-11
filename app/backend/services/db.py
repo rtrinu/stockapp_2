@@ -9,20 +9,26 @@ from datetime import datetime, timezone
 
 
 def store_order(db: Session, order_in: OrderCreate, user_id: uuid.UUID):
-    order = Order(
-        user_id=user_id,
-        symbol=order_in.symbol,
-        qty=order_in.qty,
-        side=order_in.side,
-        order_type=order_in.order_type,
-        details=order_in.details,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
-    )
-    db.add(order)
-    db.commit()
-    db.refresh(order)
-    return order
+    try:
+        order = Order(
+            user_id=user_id,
+            symbol=order_in.symbol,
+            qty=order_in.qty,
+            side=order_in.side,
+            order_type=order_in.order_type,
+            details=order_in.details,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+        db.add(order)
+        db.commit()
+        db.refresh(order)
+        return order
+
+    except Exception as e:
+        db.rollback()
+        print("ORDER INSERT FAILED:", str(e))
+        raise
 
 
 # def store_order(db: Session, user_id: UUID, alpaca_order):

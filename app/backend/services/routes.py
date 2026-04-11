@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Query
 from backend.services.dependencies import get_alpaca_service
 from backend.db.database import get_db
 from backend.auth.dependencies import get_current_user
@@ -8,6 +8,7 @@ from backend.services.schema import OrderCreate, OrderRead
 from backend.services.db import store_order
 from sqlmodel import Session
 from fastapi.templating import Jinja2Templates
+from typing import Optional
 
 
 router = APIRouter(tags=["service"])
@@ -82,14 +83,14 @@ def get_user_order_by_id(
     return service.get_order(id, db)
 
 
-@router.get("/orders?status={status}")
-# wraps list_orders_by_status
-def list_user_orders_by_status(
-    status: InternalOrderStatus,
-    service: AlpacaService = Depends(get_alpaca_service),
-    db: Session = Depends(get_db),
-):
-    return service.list_orders_by_status(status, db)
+# @router.get("/orders")
+# # wraps list_orders_by_status
+# def list_user_orders_by_status(
+#     status: Optional[InternalOrderStatus] = Query(None),
+#     service: AlpacaService = Depends(get_alpaca_service),
+#     db: Session = Depends(get_db),
+# ):
+#     return service.list_orders_by_status(status, db)
 
 
 # @router.post("/orders/{id}/cancel")

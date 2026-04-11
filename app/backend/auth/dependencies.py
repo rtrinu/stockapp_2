@@ -88,7 +88,7 @@ def refresh_tokens(
         raise HTTPException(status_code=401, detail="Malformed refresh token")
 
     # Look up in db
-    statement = select(RefreshToken).where(RefreshToken.jti == jti)
+    statement = select(RefreshToken).where(RefreshToken.id == jti)
     token_record = db.exec(statement).first()
     if not token_record or token_record.revoked:
         raise HTTPException(status_code=401, detail="Refresh token revoked")
@@ -102,39 +102,58 @@ def refresh_tokens(
     new_access = create_access_token(user_id)
 
     # Refresh rotation
-    new_jti = str(uuid4())
-    new_refresh = create_refresh_token(user_id, new_jti)
-    token_record.revoked = True
-    db.add(token_record)
-    db.commit()
+    # new_jti = str(uuid4())
+    # new_refresh = create_refresh_token(user_id, new_jti)
+    # token_record.revoked = True
+    # db.add(token_record)
+    # db.commit()
 
-    statement = select(User).where(User.id == user_id)
-    expires_at = datetime.now(timezone.utc) + timedelta(
-        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
-    )
-    hash_and_store_refresh_token(db, new_refresh, user_id, new_jti, expires_at)
+    # statement = select(User).where(User.id == user_id)
+    # expires_at = datetime.now(timezone.utc) + timedelta(
+    #     days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+    # )
+    # hash_and_store_refresh_token(db, new_refresh, user_id, new_jti, expires_at)
 
-    # Set fresh refresh cookie
-    response.set_cookie(
-        "refresh_token",
-        new_refresh,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
-        path="/",
-    )
+    # # Set fresh refresh cookie
+    # response.set_cookie(
+    #     "refresh_token",
+    #     new_refresh,
+    #     httponly=True,
+    #     secure=True,
+    #     samesite="strict",
+    #     max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+    #     path="/",
+    # )
 
     return new_access
 
 
-def get_current_user(request: Request, db: Session = Depends(get_db)):
-    token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(status_code=401)
+def get_current_user(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    access_token = request.cookies.get("access_token")
+
+    if not access_token:
+        refresh_token = request.cookies.get("refresh_token")
+        if not refresh_token:
+            raise HTTPException(status_code=401, detail="Session expired")
+
+        access_token = refresh_tokens(refresh_token, db, response)
+
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=settings.JWT_EXPIRATION_MINUTES * 60,
+            path="/",
+        )
 
     try:
-        payload = decode_jwt(token)
+        payload = decode_jwt(access_token)
         user_id = payload.get("sub")
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")

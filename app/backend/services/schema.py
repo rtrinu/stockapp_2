@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field, model_validator
-from typing import Optional, Literal, Dict, Any
+from typing import Optional, Dict, Any
 from enum import Enum
-from datetime import datetime, timezone
 import uuid
+from datetime import datetime
 
 
 class InternalOrderStatus(str, Enum):
@@ -33,21 +33,29 @@ class OrderCreate(BaseModel):
     details: Optional[Dict[str, Any]] = None
 
     @model_validator(mode="before")
+    @classmethod
     def validate_details(cls, values):
+        if not isinstance(values, dict):
+            return values  # let pydantic handle it
+
         order_type = values.get("order_type")
         details = values.get("details") or {}
 
-        if order_type == OrderType.MARKET and details:
-            raise ValueError("Market orders cannot have details")
-        elif order_type == OrderType.LIMIT and "limit_price" not in details:
-            raise ValueError("Limit orders must include limit_price")
-        elif order_type == OrderType.STOP and "stop_price" not in details:
-            raise ValueError("Stop orders must include stop_price")
-        elif order_type == OrderType.STOP_LIMIT:
+        if order_type == OrderType.MARKET:
+            if details:
+                raise ValueError("Market orders must not include details")
+
+        if order_type == OrderType.LIMIT:
+            if "limit_price" not in details:
+                raise ValueError("Limit order requires limit_price")
+
+        if order_type == OrderType.STOP:
+            if "stop_price" not in details:
+                raise ValueError("Stop order requires stop_price")
+
+        if order_type == OrderType.STOP_LIMIT:
             if "stop_price" not in details or "limit_price" not in details:
-                raise ValueError(
-                    "Stop-limit orders must include both stop_price and limit_price"
-                )
+                raise ValueError("Stop-limit requires stop_price + limit_price")
 
         return values
 

@@ -26,3 +26,18 @@ def login_page(request: Request):
 @router.get("/signup-page")
 def signup_page(request: Request):
     return templates.TemplateResponse("signup_page.html", {"request": request})
+
+
+@router.get("/orders/market")
+def market_order_page(request: Request):
+    return templates.TemplateResponse("/orders/market.html", {"request": request})
+
+
+@router.get("/orders/limit")
+def limit_order_page(request: Request):
+    return template.TemplateResponse("/orders/limit.html", {"request": request})
+
+
+@router.get("/orders/stop")
+def stop_order_page(request: Request):
+    return templates.TemplateResponse("/orders/stop.html", {"request": request})
